@@ -16,6 +16,8 @@
 
 #include <algorithm>
 #include <iostream>
+#include <vector>
+#include <cstdint>
 
 namespace VIO {
 
@@ -75,7 +77,7 @@ double RandomFloatGenerator(const double sigma);
 std::string To_string_with_precision(const double a_value, const int n = 3);
 
 // Converts time from nanoseconds to seconds
-double NsecToSec(const std::int64_t& timestamp);
+double NsecToSec(const int64_t& timestamp);
 
 // (NOT TESTED): converts time from seconds to nanoseconds
 int64_t SecToNsec(const double timeInSec);

@@ -13,6 +13,8 @@
  * @author Nathan Hughes
  */
 
+#include <opencv2/viz/viz3d.hpp>
+#include <opencv2/viz/types.hpp>
 #include "kimera-vio/frontend/RgbdCamera.h"
 
 #include "kimera-vio/frontend/Camera.h"
