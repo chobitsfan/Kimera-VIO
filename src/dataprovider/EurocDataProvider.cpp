@@ -455,7 +455,8 @@ bool EurocDataProvider::parseDataset() {
 
   // Parse Ground-Truth data.
   static const std::string ground_truth_name = "state_groundtruth_estimate0";
-  is_gt_available_ = parseGtData(dataset_path_, ground_truth_name);
+  is_gt_available_ = false;
+  //is_gt_available_ = parseGtData(dataset_path_, ground_truth_name);
 
   clipFinalFrame();
 
