@@ -105,7 +105,7 @@ $BUILD_PATH/stereoVIOEuroc \
   --vmodule=Pipeline*=00 \
   --log_output="$LOG_OUTPUT" \
   --log_euroc_gt_data=0 \
-  --save_frontend_images=1 \
+  --save_frontend_images=0 \
   --visualize_frontend_images=1 \
   --output_path="$OUTPUT_PATH"
 
