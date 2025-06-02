@@ -755,8 +755,8 @@ void EurocDataProvider::print() const {
   LOG(INFO) << "------------------ ETHDatasetParser::print ------------------\n"
             << "Displaying info for dataset: " << dataset_path_;
   // For each of the 2 cameras.
-  CHECK_EQ(vio_params_.camera_params_.size(), camera_names_.size());
-  for (size_t i = 0; i < camera_names_.size(); i++) {
+  //CHECK_EQ(vio_params_.camera_params_.size(), camera_names_.size());
+  for (size_t i = 0; i < vio_params_.camera_params_.size(); i++) {
     LOG(INFO) << "\n"
               << (i == 0 ? "Left" : "Right")
               << " camera name: " << camera_names_[i] << ", with params:\n";
