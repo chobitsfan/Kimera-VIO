@@ -11,7 +11,7 @@
 # 3D Visualization
 --visualize=true
 --visualize_lmk_type=false
---visualize_mesh=true
+--visualize_mesh=false
 --visualize_mesh_2d=false
 --visualize_mesh_with_colored_polygon_clusters=false
 --visualize_point_cloud=true
