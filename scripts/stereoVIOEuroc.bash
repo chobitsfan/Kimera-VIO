@@ -101,11 +101,11 @@ $BUILD_PATH/stereoVIOEuroc \
   --logtostderr=1 \
   --colorlogtostderr=1 \
   --log_prefix=1 \
-  --v=0 \
+  --v=1 \
   --vmodule=Pipeline*=00 \
   --log_output="$LOG_OUTPUT" \
-  --log_euroc_gt_data="$LOG_OUTPUT" \
-  --save_frontend_images=1 \
+  --log_euroc_gt_data=0 \
+  --save_frontend_images=0 \
   --visualize_frontend_images=1 \
   --output_path="$OUTPUT_PATH"
 

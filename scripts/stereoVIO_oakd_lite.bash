@@ -25,7 +25,7 @@ BUILD_PATH="../build"
 
 # Params path: specify where the parameters for Kimera are.
 PARAMS_PATH="../params/oakd_lite"
-# PARAMS_PATH="../params/EurocMono"  # use this for monocular-mode (left cam only)
+#PARAMS_PATH="../params/oakd_lite_mono"  # use this for monocular-mode (left cam only)
 
 # Vocabulary path: specify where the vocabulary for loop closure is.
 VOCABULARY_PATH="../vocabulary"
@@ -101,7 +101,7 @@ $BUILD_PATH/stereoVIOEuroc \
   --logtostderr=1 \
   --colorlogtostderr=1 \
   --log_prefix=1 \
-  --v=0 \
+  --v=1 \
   --vmodule=Pipeline*=00 \
   --log_output="$LOG_OUTPUT" \
   --log_euroc_gt_data=0 \
