@@ -21,8 +21,6 @@
 #include <Eigen/Core>
 
 #include <opencv2/opencv.hpp>
-#include <opencv2/viz/viz3d.hpp>
-#include <opencv2/viz/types.hpp>
 
 #include <gtsam/geometry/Cal3_S2.h>
 #include <gtsam/geometry/Pose3.h>
@@ -33,7 +31,6 @@
 #include "kimera-vio/mesh/MeshOptimization-definitions.h"
 #include "kimera-vio/mesh/Mesher-definitions.h"
 #include "kimera-vio/utils/Macros.h"
-#include "kimera-vio/visualizer/OpenCvVisualizer3D.h"
 
 namespace VIO {
 
@@ -51,8 +48,7 @@ class MeshOptimization {
  public:
   MeshOptimization(const MeshOptimizerType& solver_type,
                    const MeshColorType& mesh_color_type,
-                   Camera::ConstPtr camera,
-                   OpenCvVisualizer3D::Ptr visualizer = nullptr);
+                   Camera::ConstPtr camera);
   virtual ~MeshOptimization() = default;
 
   /**
@@ -63,19 +59,6 @@ class MeshOptimization {
    */
   virtual MeshOptimizationOutput::UniquePtr spinOnce(
       const MeshOptimizationInput& input);
-
-  static void draw2dMeshOnImg(
-      const Mesh2D& mesh_2d,
-      cv::Mat* img,
-      const cv::viz::Color& color = cv::viz::Color::red(),
-      const size_t& thickness = 1u,
-      const int line_type = CV_AA);
-
-  //! Visualization functions
-  void draw3dMesh(const std::string& id,
-                  const Mesh3D& mesh_3d,
-                  bool display_as_wireframe = false,
-                  const double& opacity = 1.0);
 
   //! Render the collected visualizations
   void spinDisplay();
@@ -157,11 +140,6 @@ class MeshOptimization {
                                  cv::Point3f* bearing_vector,
                                  float* inverse_depth);
 
-  void drawPixelOnImg(const cv::Point2f& pixel,
-                      const cv::Mat& img,
-                      const cv::viz::Color& color = cv::viz::Color::red(),
-                      const size_t& pixel_size = 5u);
-
  public:
   /// Image for debug display: gray scale.
   cv::Mat img_ = cv::Mat::zeros(400, 400, CV_8UC1);
@@ -185,9 +163,7 @@ class MeshOptimization {
 
   /// 3D plotting
   // TODO(Toni) this should be done by the display module...
-  cv::viz::Viz3d window_;
   MeshColorType mesh_color_type_;
-  OpenCvVisualizer3D::Ptr visualizer_;
 };
 
 }  // namespace VIO

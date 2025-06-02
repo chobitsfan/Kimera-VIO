@@ -48,78 +48,17 @@ constexpr float MeshOptimization::kMaxZ;
 
 MeshOptimization::MeshOptimization(const MeshOptimizerType& solver_type,
                                    const MeshColorType& mesh_color_type,
-                                   Camera::ConstPtr camera,
-                                   OpenCvVisualizer3D::Ptr visualizer)
+                                   Camera::ConstPtr camera)
     : mesh_optimizer_type_(solver_type),
       mono_camera_(camera),
       body_pose_cam_(camera->getBodyPoseCam()),
-      window_("Mesh Optimization"),
-      mesh_color_type_(mesh_color_type),
-      visualizer_(visualizer) {
+      mesh_color_type_(mesh_color_type) {
   CHECK(camera);
-  window_.setBackgroundColor(cv::viz::Color::white());
-  window_.setFullScreen(true);
 }
 
 MeshOptimizationOutput::UniquePtr MeshOptimization::spinOnce(
     const MeshOptimizationInput& input) {
   return solveOptimalMesh(input.pcl, input.pcl_colors, input.mesh_2d);
-}
-
-void MeshOptimization::draw2dMeshOnImg(const Mesh2D& mesh_2d,
-                                       cv::Mat* img,
-                                       const cv::viz::Color& color,
-                                       const size_t& thickness,
-                                       const int line_type) {
-  CHECK_NOTNULL(img);
-  CHECK_EQ(mesh_2d.getMeshPolygonDimension(), 3u);
-  CHECK_GT(mesh_2d.getNumberOfPolygons(), 0u);
-  // Draw the pixel on the image
-  Mesh2D::Polygon polygon;
-  for (size_t k = 0u; k < mesh_2d.getNumberOfPolygons(); k++) {
-    CHECK(mesh_2d.getPolygon(k, &polygon));
-    const Vertex2D& v0 = polygon.at(0).getVertexPosition();
-    const Vertex2D& v1 = polygon.at(1).getVertexPosition();
-    const Vertex2D& v2 = polygon.at(2).getVertexPosition();
-    cv::line(*img, v0, v1, color, thickness, line_type);
-    cv::line(*img, v1, v2, color, thickness, line_type);
-    cv::line(*img, v2, v0, color, thickness, line_type);
-  }
-}
-
-void MeshOptimization::draw3dMesh(const std::string& id,
-                                  const Mesh3D& mesh_3d,
-                                  bool display_as_wireframe,
-                                  const double& opacity) {
-  cv::Mat vertices_mesh;
-  cv::Mat polygons_mesh;
-  mesh_3d.getVerticesMeshToMat(&vertices_mesh);
-  mesh_3d.getPolygonsMeshToMat(&polygons_mesh);
-  cv::Mat colors_mesh = mesh_3d.getColorsMesh().t();  // Note the transpose.
-  if (colors_mesh.empty()) {
-    colors_mesh = cv::Mat(1u,
-                          mesh_3d.getNumberOfUniqueVertices(),
-                          CV_8UC3,
-                          cv::viz::Color::yellow());
-  }
-
-  // Build visual mesh
-  cv::viz::Mesh cv_mesh;
-  cv_mesh.cloud = vertices_mesh.t();
-  cv_mesh.polygons = polygons_mesh;
-  cv_mesh.colors = colors_mesh;
-
-  // Build widget mesh
-  cv::viz::WMesh widget_cv_mesh(cv_mesh);
-  widget_cv_mesh.setRenderingProperty(cv::viz::SHADING, cv::viz::SHADING_FLAT);
-  widget_cv_mesh.setRenderingProperty(cv::viz::AMBIENT, 0);
-  widget_cv_mesh.setRenderingProperty(cv::viz::LIGHTING, 1);
-  widget_cv_mesh.setRenderingProperty(cv::viz::OPACITY, opacity);
-  if (display_as_wireframe) {
-    widget_cv_mesh.setRenderingProperty(cv::viz::REPRESENTATION,
-                                        cv::viz::REPRESENTATION_WIREFRAME);
-  }
-  window_.showWidget(id.c_str(), widget_cv_mesh);
 }
 
 void MeshOptimization::collectTriangleDataPointsFast(
@@ -248,10 +187,6 @@ void MeshOptimization::collectTriangleDataPoints(
         CHECK_NEAR(left_pixel.x, static_cast<double>(u), 0.001);
         CHECK_NEAR(left_pixel.y, static_cast<double>(v), 0.001);
 
-        if (visualizer_) {
-          // drawPixelOnImg(left_pixel, img_, cv::viz::Color::green(), 1u);
-        }
-
         // 2. Generate correspondences btw points and triangles.
         // For each triangle in 2d Mesh
         // TODO(Toni): this can be greatly optimized by going on a per
@@ -290,36 +225,6 @@ MeshOptimizationOutput::UniquePtr MeshOptimization::solveOptimalMesh(
   // For visualization
   VisualizerOutput::UniquePtr output = std::make_unique<VisualizerOutput>();
   output->visualization_type_ = VisualizationType::kPointcloud;
-
-  // Need to visualizeScene again because the image of the camera frustum
-  // was updated
-  if (visualizer_) {
-    // Flatten and get colors for pcl
-    cv::Mat viz_cloud(0, 1, CV_32FC3, cv::Scalar(0));
-    cv::Mat colors_pcl = cv::Mat(0, 0, CV_8UC3, cv::viz::Color::red());
-    CHECK_EQ(img_.type(), CV_8UC1);
-    if (noisy_pcl.rows != 1u || noisy_pcl.cols != 1u) {
-      LOG(ERROR) << "Reshaping noisy_pcl!";
-      cv::Mat_<cv::Point3f> flat_pcl = cv::Mat(1, 0, CV_32FC3);
-      for (int32_t v = 0u; v < noisy_pcl.rows; v++) {
-        for (int32_t u = 0u; u < noisy_pcl.cols; u++) {
-          const cv::Point3f& lmk = noisy_pcl.at<cv::Point3f>(v, u);
-          if (isValidPoint(lmk)) {
-            flat_pcl.push_back(lmk);
-            colors_pcl.push_back(cv::Vec3b::all(img_.at<uint8_t>(v, u)));
-          }
-        }
-      }
-      viz_cloud = flat_pcl;
-    }
-    visualizer_->visualizePointCloud(
-        viz_cloud,
-        &output->widgets_,
-        UtilsOpenCV::gtsamPose3ToCvAffine3d(body_pose_cam_),
-        colors_pcl);
-    // draw2dMeshOnImg(img_, mesh_2d);
-    // spinDisplay();
-  }
 
   /// Step 1: Collect all datapoints that fall within triangle
   LOG(INFO) << "Collecting triangle data points.";
@@ -674,15 +579,6 @@ MeshOptimizationOutput::UniquePtr MeshOptimization::solveOptimalMesh(
     } break;
   }
 
-  // Display reconstructed mesh.
-  if (visualizer_) {
-    LOG(INFO) << "Drawing optimized reconstructed mesh...";
-    draw3dMesh("Reconstructed Mesh " + std::to_string(mesh_count_),
-               reconstructed_mesh,
-               false,
-               0.9);
-    spinDisplay();
-  }
   MeshOptimizationOutput::UniquePtr mesh_output =
       std::make_unique<MeshOptimizationOutput>();
   mesh_output->optimized_mesh_3d = reconstructed_mesh;
@@ -757,17 +653,8 @@ bool MeshOptimization::pointInTriangle(const cv::Point2f& pt,
   return !(has_neg && has_pos);
 }
 
-void MeshOptimization::drawPixelOnImg(const cv::Point2f& pixel,
-                                      const cv::Mat& img,
-                                      const cv::viz::Color& color,
-                                      const size_t& pixel_size) {
-  // Draw the pixel on the image
-  cv::circle(img, pixel, pixel_size, color, -1);
-}
-
 void MeshOptimization::spinDisplay() {
   // Display 3D window
-  window_.spin();
 }
 
 }  // namespace VIO

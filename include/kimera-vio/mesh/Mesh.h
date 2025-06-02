@@ -78,11 +78,11 @@ class Mesh {
         : lmk_id_(-1),
           vertex_position_(),
           vertex_normal_(),
-          vertex_color_(cv::viz::Color::white()) {}
+          vertex_color_({255,255,255}) {}
 
     Vertex(const LandmarkId& lmk_id,
            const VertexPosition& vertex_position,
-           const VertexColorRGB& vertex_color = cv::viz::Color::white(),
+           const VertexColorRGB& vertex_color = {255,255,255},
            const VertexNormal& vertex_normal = VertexNormal())
         : lmk_id_(lmk_id),
           vertex_position_(vertex_position),

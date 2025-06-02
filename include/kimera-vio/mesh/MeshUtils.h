@@ -18,8 +18,6 @@
 
 #include <glog/logging.h>
 
-#include <opencv2/viz.hpp>
-
 #include "kimera-vio/common/vio_types.h"
 
 namespace VIO {
@@ -174,8 +172,8 @@ inline bool rayTriangleIntersect(const Vec3f& orig,
  * Maps an input h from a value between 0.0 and 1.0 into a rainbow. Copied from
  * OctomapProvider in octomap. Copied from voxblox itself.
  */
-inline cv::viz::Color rainbowColorMap(double h) {
-  cv::viz::Color color;
+inline cv::Scalar rainbowColorMap(double h) {
+  cv::Scalar color;
   // blend over HSV-values (more colors)
 
   double s = 1.0;
@@ -221,12 +219,12 @@ inline cv::viz::Color rainbowColorMap(double h) {
 }
 
 /// Maps an input h from a value between 0.0 and 1.0 into a grayscale color.
-inline cv::viz::Color grayColorMap(double h) {
+inline cv::Scalar grayColorMap(double h) {
   auto x = round(h * 255);
   return cv::Scalar(x, x, x);
 }
 
-inline cv::viz::Color randomColor() {
+inline cv::Scalar randomColor() {
   return cv::Scalar(rand() % 256, rand() % 256, rand() % 256, 255);
 }
 

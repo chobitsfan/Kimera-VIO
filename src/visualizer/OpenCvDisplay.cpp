@@ -137,13 +137,13 @@ void OpenCv3dDisplay::setWidgetPose(const std::string& widget_id,
   }
 }
 
-void OpenCv3dDisplay::setMeshProperties(WidgetsMap* widgets) {
+bool OpenCv3dDisplay::setMeshProperties(WidgetsMap* widgets) {
   CHECK_NOTNULL(widgets);
   static const std::string kMesh = "Mesh";
   auto mesh_iterator = widgets->find(kMesh);
   if (mesh_iterator == widgets->end()) {
     LOG_EVERY_N(WARNING, 100) << "Missing Mesh in visualization's 3D widgets.";
-    return;
+    return false;
   }
   WidgetPtr& mesh_widget = mesh_iterator->second;
   // Decide mesh shading style.
@@ -194,6 +194,7 @@ void OpenCv3dDisplay::setMeshProperties(WidgetsMap* widgets) {
                                     window_data_.mesh_ambient_);
   mesh_widget->setRenderingProperty(cv::viz::LIGHTING,
                                     window_data_.mesh_lighting_);
+  return true;
 }
 
 bool OpenCv3dDisplay::removeWidget(const std::string& widget_id) {

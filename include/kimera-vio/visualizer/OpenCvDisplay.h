@@ -58,7 +58,7 @@ class OpenCv3dDisplay : public DisplayBase {
                      const cv::Affine3d& widget_pose);
 
   //! Sets the visualization properties of the 3D mesh.
-  void setMeshProperties(WidgetsMap* widgets);
+  bool setMeshProperties(WidgetsMap* widgets);
 
   //! Sets a 3D Widget Pose, because Widget3D::setPose() doesn't work;
   void setFrustumPose(const cv::Affine3d& frustum_pose);
