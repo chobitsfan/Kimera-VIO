@@ -30,6 +30,8 @@
 #include "kimera-vio/pipeline/StereoImuPipeline.h"
 #include "kimera-vio/utils/Statistics.h"
 #include "kimera-vio/utils/Timer.h"
+#include "KimeraRos2Node.h"
+#include "Ros2Visualizer.h"
 
 DEFINE_int32(dataset_type,
              0,
@@ -40,14 +42,23 @@ DEFINE_string(
     "../params/Euroc",
     "Path to the folder containing the yaml files with the VIO parameters.");
 
+KimeraRos2Node::KimeraRos2Node() : Node("kimera_vio") {
+    odo_pub = this->create_publisher<nav_msgs::msg::Odometry>("odometry", rclcpp::QoS(1).best_effort().durability_volatile());
+}
+
 int main(int argc, char* argv[]) {
   // Initialize Google's flags library.
   google::ParseCommandLineFlags(&argc, &argv, true);
   // Initialize Google's logging library.
   google::InitGoogleLogging(argv[0]);
 
+  rclcpp::init(argc, argv);
+  auto ros_node = std::make_shared<KimeraRos2Node>();
+
   // Parse VIO parameters from gflags.
   VIO::VioParams vio_params(FLAGS_params_folder_path);
+
+  auto visualizer_ = std::make_unique<Ros2Visualizer>(vio_params, ros_node);
 
   // Build dataset parser.
   VIO::DataProviderInterface::Ptr dataset_parser = nullptr;
@@ -82,10 +93,10 @@ int main(int argc, char* argv[]) {
 
   switch (vio_params.frontend_type_) {
     case VIO::FrontendType::kMonoImu: {
-      vio_pipeline = std::make_unique<VIO::MonoImuPipeline>(vio_params);
+      vio_pipeline = std::make_unique<VIO::MonoImuPipeline>(vio_params, std::move(visualizer_));
     } break;
     case VIO::FrontendType::kStereoImu: {
-      vio_pipeline = std::make_unique<VIO::StereoImuPipeline>(vio_params);
+      vio_pipeline = std::make_unique<VIO::StereoImuPipeline>(vio_params, std::move(visualizer_));
     } break;
     default: {
       LOG(FATAL) << "Unrecognized Frontend type: "
@@ -156,6 +167,8 @@ int main(int argc, char* argv[]) {
     VIO::PipelineLogger logger;
     logger.logPipelineOverallTiming(spin_duration);
   }
+
+  rclcpp::shutdown();
 
   return is_pipeline_successful ? EXIT_SUCCESS : EXIT_FAILURE;
 }

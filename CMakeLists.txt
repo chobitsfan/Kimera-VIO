@@ -31,6 +31,11 @@ find_package(opengv REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(DBoW2 REQUIRED)
 find_package(KimeraRPGO REQUIRED)
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 # Pangolin is optional
 find_package(Pangolin QUIET)
 
@@ -167,8 +172,9 @@ target_compile_features(${PROJECT_NAME} PUBLIC
 # e.g. when testing
 add_library(kimera_vio::kimera_vio ALIAS kimera_vio)
 
-add_executable(stereoVIOEuroc ./examples/KimeraVIO.cpp)
-target_link_libraries(stereoVIOEuroc PUBLIC kimera_vio::kimera_vio)
+add_executable(stereoVIOEuroc ./examples/KimeraVIO.cpp ./examples/Ros2Visualizer.cpp)
+ament_target_dependencies(stereoVIOEuroc rclcpp std_msgs sensor_msgs nav_msgs)
+target_link_libraries(stereoVIOEuroc kimera_vio::kimera_vio)
 
 ############################### TESTS ##########################################
 ### Add testing
@@ -352,3 +358,5 @@ if(NOT MSVC AND NOT XCODE_VERSION)
   message(STATUS "  C compilation flags (Release)           : ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELEASE}")
   message(STATUS "  C++ compilation flags (Release)         : ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
 endif()
+
+ament_package()
