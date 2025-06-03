@@ -21,6 +21,9 @@
 #include <memory>
 #include <utility>
 
+#include "cv_bridge/cv_bridge.hpp"
+#include "std_msgs/msg/header.hpp"
+
 #include "kimera-vio/dataprovider/EurocDataProvider.h"
 #include "kimera-vio/dataprovider/KittiDataProvider.h"
 #include "kimera-vio/frontend/StereoImuSyncPacket.h"
@@ -42,8 +45,33 @@ DEFINE_string(
     "../params/Euroc",
     "Path to the folder containing the yaml files with the VIO parameters.");
 
+class Ros2Display : public VIO::DisplayBase {
+    public:
+        KIMERA_POINTER_TYPEDEFS(Ros2Display);
+        KIMERA_DELETE_COPY_CONSTRUCTORS(Ros2Display);
+        Ros2Display(std::shared_ptr<KimeraRos2Node> ros2_node) : VIO::DisplayBase(VIO::DisplayType::kOpenCV), ros2_node_(ros2_node) {}
+        virtual ~Ros2Display() = default;
+        /**
+        * @brief spinOnce
+        * Spins the display once to render the visualizer output.
+        * @param viz_output
+        */
+        void spinOnce(VIO::DisplayInputBase::UniquePtr&& viz_output) override {
+            std_msgs::msg::Header header;
+            header.stamp = ros2_node_->get_clock()->now();
+            header.frame_id = "map";
+            for (const VIO::ImageToDisplay& img_to_display : viz_output->images_to_display_) {
+                std::shared_ptr<sensor_msgs::msg::Image> img_msg = cv_bridge::CvImage(header, "bgr8", img_to_display.image_).toImageMsg();
+                ros2_node_->img_pub->publish(*img_msg);
+            }
+        }
+    private:
+        std::shared_ptr<KimeraRos2Node> ros2_node_;
+};
+
 KimeraRos2Node::KimeraRos2Node() : Node("kimera_vio") {
     odo_pub = this->create_publisher<nav_msgs::msg::Odometry>("odometry", rclcpp::QoS(1).best_effort().durability_volatile());
+    img_pub = this->create_publisher<sensor_msgs::msg::Image>("tracking", rclcpp::QoS(1).best_effort().durability_volatile());
 }
 
 int main(int argc, char* argv[]) {
@@ -59,6 +87,7 @@ int main(int argc, char* argv[]) {
   VIO::VioParams vio_params(FLAGS_params_folder_path);
 
   auto visualizer_ = std::make_unique<Ros2Visualizer>(vio_params, ros_node);
+  auto display_ = std::make_unique<Ros2Display>(ros_node);
 
   // Build dataset parser.
   VIO::DataProviderInterface::Ptr dataset_parser = nullptr;
@@ -93,10 +122,10 @@ int main(int argc, char* argv[]) {
 
   switch (vio_params.frontend_type_) {
     case VIO::FrontendType::kMonoImu: {
-      vio_pipeline = std::make_unique<VIO::MonoImuPipeline>(vio_params, std::move(visualizer_));
+      vio_pipeline = std::make_unique<VIO::MonoImuPipeline>(vio_params, std::move(visualizer_), std::move(display_));
     } break;
     case VIO::FrontendType::kStereoImu: {
-      vio_pipeline = std::make_unique<VIO::StereoImuPipeline>(vio_params, std::move(visualizer_));
+      vio_pipeline = std::make_unique<VIO::StereoImuPipeline>(vio_params, std::move(visualizer_), std::move(display_));
     } break;
     default: {
       LOG(FATAL) << "Unrecognized Frontend type: "

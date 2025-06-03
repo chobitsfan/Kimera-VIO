@@ -36,6 +36,7 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(cv_bridge REQUIRED)
 # Pangolin is optional
 find_package(Pangolin QUIET)
 
@@ -173,7 +174,7 @@ target_compile_features(${PROJECT_NAME} PUBLIC
 add_library(kimera_vio::kimera_vio ALIAS kimera_vio)
 
 add_executable(stereoVIOEuroc ./examples/KimeraVIO.cpp ./examples/Ros2Visualizer.cpp)
-ament_target_dependencies(stereoVIOEuroc rclcpp std_msgs sensor_msgs nav_msgs)
+ament_target_dependencies(stereoVIOEuroc rclcpp std_msgs sensor_msgs nav_msgs cv_bridge)
 target_link_libraries(stereoVIOEuroc kimera_vio::kimera_vio)
 
 ############################### TESTS ##########################################
