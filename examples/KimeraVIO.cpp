@@ -81,9 +81,33 @@ class Ros2Display : public VIO::DisplayBase {
         std::shared_ptr<KimeraRos2Node> ros2_node_;
 };
 
-KimeraRos2Node::KimeraRos2Node() : Node("kimera_vio") {
+KimeraRos2Node::KimeraRos2Node(const VIO::VioParams& vio_params) : Node("kimera_vio") , vio_params_(vio_params) {
+    frame_count_ = 0;
     odo_pub = this->create_publisher<nav_msgs::msg::Odometry>("odometry", rclcpp::QoS(1).best_effort().durability_volatile());
     img_pub = this->create_publisher<sensor_msgs::msg::Image>("tracking", rclcpp::QoS(1).best_effort().durability_volatile());
+}
+
+void KimeraRos2Node::init_sub(VIO::Pipeline::Ptr vio_pipeline) {
+    auto l_img_cb = [this](sensor_msgs::msg::Image::UniquePtr msg) -> void {
+        cv::Mat mat(msg->height, msg->width, CV_8UC1, const_cast<uint8_t*>(msg->data.data()), msg->step);
+        int64_t ts = msg->header.stamp.sec * 1000000000LL + msg->header.stamp.nanosec;
+        vio_pipeline_->fillLeftFrameQueue(std::make_unique<VIO::Frame>(frame_count_, ts, vio_params_.camera_params_.at(0), mat.clone()));
+        frame_count_++;
+    };
+    auto imu_cb = [this](sensor_msgs::msg::Imu::UniquePtr msg) -> void {
+        int64_t ts = msg->header.stamp.sec * 1000000000LL + msg->header.stamp.nanosec;
+        VIO::ImuAccGyr imu_accgyr;
+        imu_accgyr(0) = -msg->linear_acceleration.z;
+        imu_accgyr(1) = -msg->linear_acceleration.x;
+        imu_accgyr(2) = msg->linear_acceleration.y;
+        imu_accgyr(3) = -msg->angular_velocity.z;
+        imu_accgyr(4) = -msg->angular_velocity.x;
+        imu_accgyr(5) = msg->angular_velocity.y;
+        vio_pipeline_->fillSingleImuQueue(VIO::ImuMeasurement(ts, imu_accgyr));
+    };
+    vio_pipeline_ = vio_pipeline;
+    l_img_sub_ = this->create_subscription<sensor_msgs::msg::Image>("mono_left", rclcpp::QoS(2).best_effort().durability_volatile(), l_img_cb);
+    imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>("imu", rclcpp::QoS(20).best_effort().durability_volatile(), imu_cb);
 }
 
 int main(int argc, char* argv[]) {
@@ -92,11 +116,11 @@ int main(int argc, char* argv[]) {
   // Initialize Google's logging library.
   google::InitGoogleLogging(argv[0]);
 
-  rclcpp::init(argc, argv);
-  auto ros_node = std::make_shared<KimeraRos2Node>();
-
   // Parse VIO parameters from gflags.
   VIO::VioParams vio_params(FLAGS_params_folder_path);
+
+  rclcpp::init(argc, argv);
+  auto ros_node = std::make_shared<KimeraRos2Node>(vio_params);
 
   auto visualizer_ = std::make_unique<Ros2Visualizer>(vio_params, ros_node);
   auto display_ = std::make_unique<Ros2Display>(ros_node);
@@ -107,8 +131,6 @@ int main(int argc, char* argv[]) {
     case 0: {
       switch (vio_params.frontend_type_) {
         case VIO::FrontendType::kMonoImu: {
-          dataset_parser =
-              std::make_unique<VIO::MonoEurocDataProvider>(vio_params);
         } break;
         case VIO::FrontendType::kStereoImu: {
           dataset_parser = std::make_unique<VIO::EurocDataProvider>(vio_params);
@@ -128,13 +150,13 @@ int main(int argc, char* argv[]) {
                  << " 0: EuRoC, 1: Kitti.";
     }
   }
-  CHECK(dataset_parser);
 
   VIO::Pipeline::Ptr vio_pipeline;
 
   switch (vio_params.frontend_type_) {
     case VIO::FrontendType::kMonoImu: {
       vio_pipeline = std::make_unique<VIO::MonoImuPipeline>(vio_params, std::move(visualizer_), std::move(display_));
+      ros_node->init_sub(vio_pipeline);
     } break;
     case VIO::FrontendType::kStereoImu: {
       vio_pipeline = std::make_unique<VIO::StereoImuPipeline>(vio_params, std::move(visualizer_), std::move(display_));
@@ -145,19 +167,6 @@ int main(int argc, char* argv[]) {
                  << ". 0: Mono, 1: Stereo.";
     } break;
   }
-
-  // Register callback to shutdown data provider in case VIO pipeline
-  // shutsdown.
-  vio_pipeline->registerShutdownCallback(
-      std::bind(&VIO::DataProviderInterface::shutdown, dataset_parser));
-
-  // Register callback to vio pipeline.
-  dataset_parser->registerImuSingleCallback(std::bind(
-      &VIO::Pipeline::fillSingleImuQueue, vio_pipeline, std::placeholders::_1));
-  // We use blocking variants to avoid overgrowing the input queues (use
-  // the non-blocking versions with real sensor streams)
-  dataset_parser->registerLeftFrameCallback(std::bind(
-      &VIO::Pipeline::fillLeftFrameQueue, vio_pipeline, std::placeholders::_1));
 
   if (vio_params.frontend_type_ == VIO::FrontendType::kStereoImu) {
     auto stereo_pipeline =
@@ -190,8 +199,9 @@ int main(int argc, char* argv[]) {
     handle_shutdown.get();
     handle_pipeline.get();
   } else {
-    while (dataset_parser->spin() && vio_pipeline->spin()) {
-      continue;
+    while (rclcpp::ok()) {
+        rclcpp::spin_some(ros_node);
+        if (!vio_pipeline->spin()) break;
     };
     vio_pipeline->shutdown();
     is_pipeline_successful = true;
