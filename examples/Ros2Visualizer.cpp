@@ -13,12 +13,12 @@ VIO::VisualizerOutput::UniquePtr Ros2Visualizer::spinOnce(const VIO::VisualizerI
         odo_msg.header.stamp = ros2_node_->get_clock()->now();
         odo_msg.header.frame_id = "map";
         odo_msg.child_frame_id = "map";
-        odo_msg.pose.pose.position.x = pose.x();
-        odo_msg.pose.pose.position.y = pose.y();
-        odo_msg.pose.pose.position.z = pose.z();
-        odo_msg.pose.pose.orientation.x = quaternion.x();
-        odo_msg.pose.pose.orientation.y = quaternion.y();
-        odo_msg.pose.pose.orientation.z = quaternion.z();
+        odo_msg.pose.pose.position.x = -pose.z();
+        odo_msg.pose.pose.position.y = -pose.x();
+        odo_msg.pose.pose.position.z = pose.y();
+        odo_msg.pose.pose.orientation.x = -quaternion.z();
+        odo_msg.pose.pose.orientation.y = -quaternion.x();
+        odo_msg.pose.pose.orientation.z = quaternion.y();
         odo_msg.pose.pose.orientation.w = quaternion.w();
         ros2_node_->odo_pub->publish(odo_msg);
     }

@@ -35,6 +35,8 @@
 #include "KimeraRos2Node.h"
 #include "Ros2Visualizer.h"
 
+using namespace std::literals::chrono_literals;
+
 DEFINE_int32(dataset_type,
              0,
              "Type of parser to use:\n "
@@ -202,6 +204,7 @@ int main(int argc, char* argv[]) {
     while (rclcpp::ok()) {
         rclcpp::spin_some(ros_node);
         if (!vio_pipeline->spin()) break;
+        std::this_thread::sleep_for(1ms);
     };
     vio_pipeline->shutdown();
     is_pipeline_successful = true;
