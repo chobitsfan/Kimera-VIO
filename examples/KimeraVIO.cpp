@@ -98,11 +98,11 @@ void KimeraRos2Node::init_sub(VIO::Pipeline::Ptr vio_pipeline) {
         int64_t ts = msg->header.stamp.sec * 1000000000LL + msg->header.stamp.nanosec;
         VIO::ImuAccGyr imu_accgyr;
         imu_accgyr(0) = msg->linear_acceleration.x;
-        imu_accgyr(1) = -msg->linear_acceleration.y;
-        imu_accgyr(2) = -msg->linear_acceleration.z;
+        imu_accgyr(1) = msg->linear_acceleration.y;
+        imu_accgyr(2) = msg->linear_acceleration.z;
         imu_accgyr(3) = msg->angular_velocity.x;
-        imu_accgyr(4) = -msg->angular_velocity.y;
-        imu_accgyr(5) = -msg->angular_velocity.z;
+        imu_accgyr(4) = msg->angular_velocity.y;
+        imu_accgyr(5) = msg->angular_velocity.z;
         vio_pipeline_->fillSingleImuQueue(VIO::ImuMeasurement(ts, imu_accgyr));
     };
     vio_pipeline_ = vio_pipeline;
