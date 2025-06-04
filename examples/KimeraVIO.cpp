@@ -21,7 +21,6 @@
 #include <memory>
 #include <utility>
 
-#include "cv_bridge/cv_bridge.hpp"
 #include "std_msgs/msg/header.hpp"
 
 #include "kimera-vio/dataprovider/EurocDataProvider.h"
@@ -57,13 +56,13 @@ class Ros2Display : public VIO::DisplayBase {
         * @param viz_output
         */
         void spinOnce(VIO::DisplayInputBase::UniquePtr&& viz_output) override {
-            std_msgs::msg::Header header;
+            /*std_msgs::msg::Header header;
             header.stamp = ros2_node_->get_clock()->now();
             header.frame_id = "map";
             for (const VIO::ImageToDisplay& img_to_display : viz_output->images_to_display_) {
                 std::shared_ptr<sensor_msgs::msg::Image> img_msg = cv_bridge::CvImage(header, "bgr8", img_to_display.image_).toImageMsg();
                 ros2_node_->img_pub->publish(*img_msg);
-            }
+            }*/
         }
     private:
         std::shared_ptr<KimeraRos2Node> ros2_node_;
@@ -71,7 +70,7 @@ class Ros2Display : public VIO::DisplayBase {
 
 KimeraRos2Node::KimeraRos2Node() : Node("kimera_vio") {
     odo_pub = this->create_publisher<nav_msgs::msg::Odometry>("odometry", rclcpp::QoS(1).best_effort().durability_volatile());
-    img_pub = this->create_publisher<sensor_msgs::msg::Image>("tracking", rclcpp::QoS(1).best_effort().durability_volatile());
+    //img_pub = this->create_publisher<sensor_msgs::msg::Image>("tracking", rclcpp::QoS(1).best_effort().durability_volatile());
 }
 
 int main(int argc, char* argv[]) {
