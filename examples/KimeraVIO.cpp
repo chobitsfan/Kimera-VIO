@@ -63,6 +63,19 @@ class Ros2Display : public VIO::DisplayBase {
                 std::shared_ptr<sensor_msgs::msg::Image> img_msg = cv_bridge::CvImage(header, "bgr8", img_to_display.image_).toImageMsg();
                 ros2_node_->img_pub->publish(*img_msg);
             }*/
+            sensor_msgs::msg::Image img_msg;
+            img_msg.header.stamp = ros2_node_->get_clock()->now();
+            img_msg.header.frame_id = "map";
+            img_msg.encoding = "bgr8";
+            img_msg.is_bigendian = false;
+            for (const VIO::ImageToDisplay& img_to_display : viz_output->images_to_display_) {
+                cv::Mat img = img_to_display.image_;
+                img_msg.height = img.rows;
+                img_msg.width = img.cols;
+                img_msg.step = img.step;
+                img_msg.data.assign(img.datastart, img.dataend);
+                ros2_node_->img_pub->publish(img_msg);
+            }
         }
     private:
         std::shared_ptr<KimeraRos2Node> ros2_node_;
@@ -70,7 +83,7 @@ class Ros2Display : public VIO::DisplayBase {
 
 KimeraRos2Node::KimeraRos2Node() : Node("kimera_vio") {
     odo_pub = this->create_publisher<nav_msgs::msg::Odometry>("odometry", rclcpp::QoS(1).best_effort().durability_volatile());
-    //img_pub = this->create_publisher<sensor_msgs::msg::Image>("tracking", rclcpp::QoS(1).best_effort().durability_volatile());
+    img_pub = this->create_publisher<sensor_msgs::msg::Image>("tracking", rclcpp::QoS(1).best_effort().durability_volatile());
 }
 
 int main(int argc, char* argv[]) {
