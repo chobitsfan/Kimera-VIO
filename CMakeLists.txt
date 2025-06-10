@@ -172,9 +172,13 @@ target_compile_features(${PROJECT_NAME} PUBLIC
 # e.g. when testing
 add_library(kimera_vio::kimera_vio ALIAS kimera_vio)
 
-add_executable(stereoVIOEuroc ./examples/KimeraVIO.cpp ./examples/Ros2Visualizer.cpp)
-ament_target_dependencies(stereoVIOEuroc rclcpp std_msgs sensor_msgs nav_msgs)
-target_link_libraries(stereoVIOEuroc kimera_vio::kimera_vio)
+add_executable(monoVIO_ROS2 ./examples/KimeraVIO.cpp ./examples/Ros2Visualizer.cpp)
+ament_target_dependencies(monoVIO_ROS2 rclcpp std_msgs sensor_msgs nav_msgs)
+target_link_libraries(monoVIO_ROS2 kimera_vio::kimera_vio)
+
+add_executable(monoVIO_ROS2_offline ./examples/KimeraVIO_offline.cpp ./examples/Ros2Visualizer.cpp)
+ament_target_dependencies(monoVIO_ROS2_offline rclcpp std_msgs sensor_msgs nav_msgs)
+target_link_libraries(monoVIO_ROS2_offline kimera_vio::kimera_vio)
 
 ############################### TESTS ##########################################
 ### Add testing

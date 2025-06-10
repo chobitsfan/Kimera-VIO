@@ -1,3 +1,5 @@
+% vi swap files
+*.swp
 /build/
 /data-sets/
 /.settings/

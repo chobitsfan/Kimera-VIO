@@ -1,6 +1,8 @@
 #include "Ros2Visualizer.h"
 
-Ros2Visualizer::Ros2Visualizer(const VIO::VioParams& vio_params, std::shared_ptr<KimeraRos2Node> ros2_node) : Visualizer3D(VIO::VisualizationType::kNone), ros2_node_(ros2_node) {
+// Ros2Visualizer::Ros2Visualizer(const VIO::VioParams& vio_params, std::shared_ptr<KimeraRos2NodeCommon> ros2_node) : Visualizer3D(vio_params), ros2_node_(ros2_node) {
+// Ros2Visualizer::Ros2Visualizer(const VIO::VioParams& vio_params, std::shared_ptr<KimeraRos2Node> ros2_node) : Visualizer3D(VIO::VisualizationType::kNone), ros2_node_(ros2_node) {
+Ros2Visualizer::Ros2Visualizer( std::shared_ptr<KimeraRos2NodeCommon> ros2_node) : Visualizer3D(VIO::VisualizationType::kNone), ros2_node_(ros2_node) {
 }
 
 VIO::VisualizerOutput::UniquePtr Ros2Visualizer::spinOnce(const VIO::VisualizerInput& viz_input) {
@@ -20,7 +22,8 @@ VIO::VisualizerOutput::UniquePtr Ros2Visualizer::spinOnce(const VIO::VisualizerI
         odo_msg.pose.pose.orientation.y = quaternion.y();
         odo_msg.pose.pose.orientation.z = quaternion.z();
         odo_msg.pose.pose.orientation.w = quaternion.w();
-        ros2_node_->odo_pub->publish(odo_msg);
+        ros2_node_->getOdoPub()->publish(odo_msg);
+        // ros2_node_->odo_pub->publish(odo_msg);
     }
 
     // Return empty output, since in ROS, we only publish, not display...

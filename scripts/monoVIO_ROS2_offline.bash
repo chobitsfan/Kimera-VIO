@@ -85,7 +85,7 @@ echo """ Launching:
 # Execute stereoVIOEuroc with given flags.
 # The flag --help will provide you with information about what each flag
 # does.
-$BUILD_PATH/stereoVIOEuroc \
+$BUILD_PATH/monoVIO_ROS2_offline \
   --dataset_type="$DATASET_TYPE" \
   --dataset_path="$DATASET_PATH" \
   --initial_k=50 \
