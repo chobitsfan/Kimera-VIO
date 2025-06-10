@@ -58,35 +58,48 @@ class Ros2Display : public VIO::DisplayBase {
         * @param viz_output
         */
         void spinOnce(VIO::DisplayInputBase::UniquePtr&& viz_output) override {
-            /*std_msgs::msg::Header header;
-            header.stamp = ros2_node_->get_clock()->now();
-            header.frame_id = "map";
             for (const VIO::ImageToDisplay& img_to_display : viz_output->images_to_display_) {
-                std::shared_ptr<sensor_msgs::msg::Image> img_msg = cv_bridge::CvImage(header, "bgr8", img_to_display.image_).toImageMsg();
-                ros2_node_->img_pub->publish(*img_msg);
-            }*/
-            sensor_msgs::msg::Image img_msg;
-            img_msg.header.stamp = ros2_node_->get_clock()->now();
-            img_msg.header.frame_id = "map";
-            img_msg.encoding = "bgr8";
-            img_msg.is_bigendian = false;
-            for (const VIO::ImageToDisplay& img_to_display : viz_output->images_to_display_) {
-                cv::Mat img = img_to_display.image_;
-                img_msg.height = img.rows;
-                img_msg.width = img.cols;
-                img_msg.step = img.step;
-                img_msg.data.assign(img.datastart, img.dataend);
-                ros2_node_->img_pub->publish(img_msg);
+                if (!ros2_node_->img_avail_ && img_to_display.name_ == "feature_tracks") {
+                    ros2_node_->img_to_pub_ = img_to_display.image_;
+                    ros2_node_->img_avail_ = true;
+                }
             }
         }
     private:
         std::shared_ptr<KimeraRos2Node> ros2_node_;
 };
 
-KimeraRos2Node::KimeraRos2Node(const VIO::VioParams& vio_params) : Node("kimera_vio") , vio_params_(vio_params) {
+KimeraRos2Node::KimeraRos2Node(const VIO::VioParams& vio_params) : Node("kimera_vio"), vio_params_(vio_params) {
     frame_count_ = 0;
+    thread_go_ = true;
+    img_avail_ = false;
+    img_pub_thread_ = std::thread(&KimeraRos2Node::pub_worker, this);
     odo_pub = this->create_publisher<nav_msgs::msg::Odometry>("odometry", rclcpp::QoS(1).best_effort().durability_volatile());
     img_pub = this->create_publisher<sensor_msgs::msg::Image>("tracking", rclcpp::QoS(1).best_effort().durability_volatile());
+}
+
+KimeraRos2Node::~KimeraRos2Node() {
+    thread_go_ = false;
+    img_pub_thread_.join();
+}
+
+void KimeraRos2Node::pub_worker() {
+    while (thread_go_) {
+        if (img_avail_) {
+            sensor_msgs::msg::Image img_msg;
+            img_msg.header.stamp = this->get_clock()->now();
+            img_msg.header.frame_id = "map";
+            img_msg.encoding = "bgr8";
+            img_msg.is_bigendian = false;
+            img_msg.height = img_to_pub_.rows;
+            img_msg.width = img_to_pub_.cols;
+            img_msg.step = img_to_pub_.step;
+            img_msg.data.assign(img_to_pub_.datastart, img_to_pub_.dataend);
+            img_pub->publish(img_msg);
+            img_avail_ = false;
+        }
+        std::this_thread::sleep_for(5ms);
+    }
 }
 
 void KimeraRos2Node::init_sub(VIO::Pipeline::Ptr vio_pipeline) {
@@ -124,7 +137,7 @@ int main(int argc, char* argv[]) {
   rclcpp::init(argc, argv);
   auto ros_node = std::make_shared<KimeraRos2Node>(vio_params);
 
-  auto visualizer_ = std::make_unique<Ros2Visualizer>(vio_params, ros_node);
+  auto visualizer_ = std::make_unique<Ros2Visualizer>(ros_node);
   auto display_ = std::make_unique<Ros2Display>(ros_node);
 
   // Build dataset parser.

@@ -9,7 +9,7 @@ class Ros2Visualizer : public VIO::Visualizer3D {
         KIMERA_POINTER_TYPEDEFS(Ros2Visualizer);
         KIMERA_DELETE_COPY_CONSTRUCTORS(Ros2Visualizer);
 
-        Ros2Visualizer(const VIO::VioParams& vio_params, std::shared_ptr<KimeraRos2Node> ros2_node);
+        Ros2Visualizer(std::shared_ptr<KimeraRos2Node> ros2_node);
         virtual ~Ros2Visualizer() = default;
 
         /**

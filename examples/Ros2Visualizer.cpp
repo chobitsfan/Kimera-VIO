@@ -1,6 +1,6 @@
 #include "Ros2Visualizer.h"
 
-Ros2Visualizer::Ros2Visualizer(const VIO::VioParams& vio_params, std::shared_ptr<KimeraRos2Node> ros2_node) : Visualizer3D(VIO::VisualizationType::kNone), ros2_node_(ros2_node) {
+Ros2Visualizer::Ros2Visualizer(std::shared_ptr<KimeraRos2Node> ros2_node) : Visualizer3D(VIO::VisualizationType::kNone), ros2_node_(ros2_node) {
 }
 
 VIO::VisualizerOutput::UniquePtr Ros2Visualizer::spinOnce(const VIO::VisualizerInput& viz_input) {
