@@ -146,6 +146,7 @@ int main(int argc, char* argv[]) {
     case 0: {
       switch (vio_params.frontend_type_) {
         case VIO::FrontendType::kMonoImu: {
+          dataset_parser = std::make_unique<VIO::MonoEurocDataProvider>(vio_params);
         } break;
         case VIO::FrontendType::kStereoImu: {
           dataset_parser = std::make_unique<VIO::EurocDataProvider>(vio_params);
@@ -160,6 +161,8 @@ int main(int argc, char* argv[]) {
     case 1: {
       dataset_parser = std::make_unique<VIO::KittiDataProvider>();
     } break;
+    case 2: // get data from ros2
+      break;
     default: {
       LOG(FATAL) << "Unrecognized dataset type: " << FLAGS_dataset_type << "."
                  << " 0: EuRoC, 1: Kitti.";
@@ -171,7 +174,6 @@ int main(int argc, char* argv[]) {
   switch (vio_params.frontend_type_) {
     case VIO::FrontendType::kMonoImu: {
       vio_pipeline = std::make_unique<VIO::MonoImuPipeline>(vio_params, std::move(visualizer_), std::move(display_));
-      ros_node->init_sub(vio_pipeline);
     } break;
     case VIO::FrontendType::kStereoImu: {
       vio_pipeline = std::make_unique<VIO::StereoImuPipeline>(vio_params, std::move(visualizer_), std::move(display_));
@@ -183,6 +185,8 @@ int main(int argc, char* argv[]) {
     } break;
   }
 
+  if (dataset_parser == nullptr) ros_node->init_sub(vio_pipeline);
+
   if (vio_params.frontend_type_ == VIO::FrontendType::kStereoImu) {
     auto stereo_pipeline =
         std::dynamic_pointer_cast<VIO::StereoImuPipeline>(vio_pipeline);
@@ -192,6 +196,32 @@ int main(int argc, char* argv[]) {
         std::bind(&VIO::StereoImuPipeline::fillRightFrameQueue,
                   stereo_pipeline,
                   std::placeholders::_1));
+  }
+
+  if (dataset_parser != nullptr) {
+      // Register callback to shutdown data provider in case VIO pipeline
+      // shutsdown.
+      vio_pipeline->registerShutdownCallback(
+          std::bind(&VIO::DataProviderInterface::shutdown, dataset_parser));
+
+      // Register callback to vio pipeline.
+      dataset_parser->registerImuSingleCallback(std::bind(
+          &VIO::Pipeline::fillSingleImuQueue, vio_pipeline, std::placeholders::_1));
+      // We use blocking variants to avoid overgrowing the input queues (use
+      // the non-blocking versions with real sensor streams)
+      dataset_parser->registerLeftFrameCallback(std::bind(
+          &VIO::Pipeline::fillLeftFrameQueue, vio_pipeline, std::placeholders::_1));
+
+      if (vio_params.frontend_type_ == VIO::FrontendType::kStereoImu) {
+        auto stereo_pipeline =
+            std::dynamic_pointer_cast<VIO::StereoImuPipeline>(vio_pipeline);
+        CHECK(stereo_pipeline);
+
+        dataset_parser->registerRightFrameCallback(
+            std::bind(&VIO::StereoImuPipeline::fillRightFrameQueue,
+                      stereo_pipeline,
+                      std::placeholders::_1));
+      }
   }
 
   // Spin dataset.
@@ -215,7 +245,10 @@ int main(int argc, char* argv[]) {
     handle_pipeline.get();
   } else {
     while (rclcpp::ok()) {
-        rclcpp::spin_some(ros_node);
+        if (dataset_parser == nullptr)
+            rclcpp::spin_some(ros_node);
+        else
+            if (!dataset_parser->spin()) break;
         if (!vio_pipeline->spin()) break;
         std::this_thread::sleep_for(1ms);
     };

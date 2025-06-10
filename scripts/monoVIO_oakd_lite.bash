@@ -6,8 +6,8 @@
 # The path can be absolute, or relative to this file location.
 DATASET_PATH="/path/to/euroc/dataset"
 
-# Specify: 0 to run on EuRoC data, 1 to run on Kitti (not supported)
-DATASET_TYPE=0
+# Specify: 0 to run on EuRoC data, 1 to run on Kitti (not supported), 2 to get data from ros2
+DATASET_TYPE=2
 
 # Specify: 1 to enable the LoopClosureDetector, 0 to not.
 USE_LCD=0
@@ -101,7 +101,7 @@ $BUILD_PATH/stereoVIOEuroc \
   --logtostderr=1 \
   --colorlogtostderr=1 \
   --log_prefix=1 \
-  --v=1 \
+  --v=0 \
   --vmodule=Pipeline*=00 \
   --log_output="$LOG_OUTPUT" \
   --log_euroc_gt_data=0 \
