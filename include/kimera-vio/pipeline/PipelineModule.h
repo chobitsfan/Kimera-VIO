@@ -396,7 +396,7 @@ class SIMOPipelineModule : public MIMOPipelineModule<Input, Output> {
     if (queue_state) {
       return input;
     } else {
-      LOG(WARNING) << "Module: " << PIO::name_id_ << " - "
+      VLOG(1) << "Module: " << PIO::name_id_ << " - "
                    << "Input queue: " << input_queue_->queue_id_
                    << " didn't return an output.";
       return nullptr;

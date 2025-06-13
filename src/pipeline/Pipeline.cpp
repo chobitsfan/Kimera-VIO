@@ -99,7 +99,7 @@ Pipeline::~Pipeline() {
 bool Pipeline::spin() {
   // Feed data to the pipeline
   CHECK(data_provider_module_);
-  LOG(INFO) << "Spinning Kimera-VIO.";
+  VLOG(1) << "Spinning Kimera-VIO.";
   return data_provider_module_->spin();
 }
 
