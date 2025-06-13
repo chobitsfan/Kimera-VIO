@@ -583,6 +583,7 @@ void PipelineLogger::logPipelineOverallTiming(
 
   VIO::utils::Statistics::WriteAllSamplesToCsvFile(FLAGS_output_path + '/' +
                                                    "StatisticsVIO.csv");
+  VIO::utils::Statistics::WriteToYamlFile(FLAGS_output_path + "/StatisticsVIO.yaml");
 }
 
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
