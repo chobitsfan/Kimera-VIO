@@ -104,8 +104,8 @@ void KimeraRos2Node::pub_worker() {
 
 void KimeraRos2Node::init_sub(VIO::Pipeline::Ptr vio_pipeline) {
     auto l_img_cb = [this](sensor_msgs::msg::Image::UniquePtr msg) -> void {
-        cv::Mat mat(msg->height, msg->width, CV_8UC1, const_cast<uint8_t*>(msg->data.data()), msg->step);
         int64_t ts = msg->header.stamp.sec * 1000000000LL + msg->header.stamp.nanosec;
+        cv::Mat mat(msg->height, msg->width, CV_8UC1, const_cast<uint8_t*>(msg->data.data()), msg->step);
         vio_pipeline_->fillLeftFrameQueue(std::make_unique<VIO::Frame>(frame_count_, ts, vio_params_.camera_params_.at(0), mat.clone()));
         frame_count_++;
     };
@@ -122,7 +122,7 @@ void KimeraRos2Node::init_sub(VIO::Pipeline::Ptr vio_pipeline) {
     };
     vio_pipeline_ = vio_pipeline;
     l_img_sub_ = this->create_subscription<sensor_msgs::msg::Image>("mono_left", rclcpp::QoS(2).best_effort().durability_volatile(), l_img_cb);
-    imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>("imu", rclcpp::QoS(20).best_effort().durability_volatile(), imu_cb);
+    imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>("imu", rclcpp::QoS(40).best_effort().durability_volatile(), imu_cb);
 }
 
 int main(int argc, char* argv[]) {
@@ -185,17 +185,15 @@ int main(int argc, char* argv[]) {
     } break;
   }
 
-  if (dataset_parser == nullptr) ros_node->init_sub(vio_pipeline);
-
   if (vio_params.frontend_type_ == VIO::FrontendType::kStereoImu) {
     auto stereo_pipeline =
         std::dynamic_pointer_cast<VIO::StereoImuPipeline>(vio_pipeline);
     CHECK(stereo_pipeline);
 
-    dataset_parser->registerRightFrameCallback(
-        std::bind(&VIO::StereoImuPipeline::fillRightFrameQueue,
-                  stereo_pipeline,
-                  std::placeholders::_1));
+    if (dataset_parser == nullptr)
+        LOG(FATAL) << "ros2 input do not support stereo yet";
+    else
+        dataset_parser->registerRightFrameCallback(std::bind(&VIO::StereoImuPipeline::fillRightFrameQueue, stereo_pipeline, std::placeholders::_1));
   }
 
   if (dataset_parser != nullptr) {
@@ -222,27 +220,35 @@ int main(int argc, char* argv[]) {
                       stereo_pipeline,
                       std::placeholders::_1));
       }
-  }
+  } else ros_node->init_sub(vio_pipeline);
 
   // Spin dataset.
   auto tic = VIO::utils::Timer::tic();
   bool is_pipeline_successful = false;
   if (vio_params.parallel_run_) {
-    auto handle = std::async(
-        std::launch::async, &VIO::DataProviderInterface::spin, dataset_parser);
-    auto handle_pipeline =
-        std::async(std::launch::async, &VIO::Pipeline::spin, vio_pipeline);
-    auto handle_shutdown = std::async(
-        std::launch::async,
-        &VIO::Pipeline::waitForShutdown,
-        vio_pipeline,
-        [&dataset_parser]() -> bool { return !dataset_parser->hasData(); },
-        500,
-        true);
-    vio_pipeline->spinViz();
-    is_pipeline_successful = !handle.get();
-    handle_shutdown.get();
-    handle_pipeline.get();
+    if (dataset_parser == nullptr) {
+        auto handle_pipeline = std::async(std::launch::async, &VIO::Pipeline::spin, vio_pipeline);
+        rclcpp::spin(ros_node);
+        vio_pipeline->shutdown();
+        handle_pipeline.get();
+        is_pipeline_successful = true;
+    } else {
+        auto handle = std::async(
+            std::launch::async, &VIO::DataProviderInterface::spin, dataset_parser);
+        auto handle_pipeline =
+            std::async(std::launch::async, &VIO::Pipeline::spin, vio_pipeline);
+        auto handle_shutdown = std::async(
+            std::launch::async,
+            &VIO::Pipeline::waitForShutdown,
+            vio_pipeline,
+            [&dataset_parser]() -> bool { return !dataset_parser->hasData(); },
+            500,
+            true);
+        vio_pipeline->spinViz();
+        is_pipeline_successful = !handle.get();
+        handle_shutdown.get();
+        handle_pipeline.get();
+    }
   } else {
     while (rclcpp::ok()) {
         if (dataset_parser == nullptr)
