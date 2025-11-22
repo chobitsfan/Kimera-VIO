@@ -79,6 +79,7 @@ class Ros2Display : public VIO::DisplayBase {
 
 KimeraRos2Node::KimeraRos2Node(const VIO::VioParams& vio_params) : Node("kimera_vio"), vio_params_(vio_params) {
     frame_count_ = 0;
+    ts_diff_ = 0;
     odo_pub = this->create_publisher<nav_msgs::msg::Odometry>("odometry", rclcpp::QoS(1).best_effort().durability_volatile());
     img_pub = this->create_publisher<sensor_msgs::msg::Image>("tracking", rclcpp::QoS(1).best_effort().durability_volatile());
 }
@@ -88,10 +89,14 @@ KimeraRos2Node::~KimeraRos2Node() {
 
 void KimeraRos2Node::init_sub(VIO::Pipeline::Ptr vio_pipeline) {
     auto l_img_cb = [this](sensor_msgs::msg::Image::UniquePtr msg) -> void {
-        int64_t ts = msg->header.stamp.sec * 1000000000LL + msg->header.stamp.nanosec;
-        cv::Mat mat(msg->height, msg->width, CV_8UC1, const_cast<uint8_t*>(msg->data.data()), msg->step);
-        vio_pipeline_->fillLeftFrameQueue(std::make_unique<VIO::Frame>(frame_count_, ts, vio_params_.camera_params_.at(0), mat.clone()));
-        frame_count_++;
+        if (ts_diff_ == 0) {
+            LOG(WARNING) << "not rcv ts diff yet";
+        } else {
+            int64_t ts = msg->header.stamp.sec * 1000000000LL + msg->header.stamp.nanosec + ts_diff_;
+            cv::Mat mat(msg->height, msg->width, CV_8UC1, const_cast<uint8_t*>(msg->data.data()), msg->step);
+            vio_pipeline_->fillLeftFrameQueue(std::make_unique<VIO::Frame>(frame_count_, ts, vio_params_.camera_params_.at(0), mat.clone()));
+            frame_count_++;
+        }
     };
     auto imu_cb = [this](sensor_msgs::msg::Imu::UniquePtr msg) -> void {
         int64_t ts = msg->header.stamp.sec * 1000000000LL + msg->header.stamp.nanosec;
@@ -104,9 +109,13 @@ void KimeraRos2Node::init_sub(VIO::Pipeline::Ptr vio_pipeline) {
         imu_accgyr(5) = msg->angular_velocity.z;
         vio_pipeline_->fillSingleImuQueue(VIO::ImuMeasurement(ts, imu_accgyr));
     };
+    auto ts_diff_cb = [this](std_msgs::msg::Int64::UniquePtr msg) -> void {
+        ts_diff_ = msg->data;
+    };
     vio_pipeline_ = vio_pipeline;
     l_img_sub_ = this->create_subscription<sensor_msgs::msg::Image>("mono_left", rclcpp::QoS(2).best_effort().durability_volatile(), l_img_cb);
     imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>("imu", rclcpp::QoS(40).best_effort().durability_volatile(), imu_cb);
+    ts_diff_sub_ = this->create_subscription<std_msgs::msg::Int64>("ts_diff", rclcpp::QoS(2).best_effort().durability_volatile(), ts_diff_cb);
 }
 
 int main(int argc, char* argv[]) {

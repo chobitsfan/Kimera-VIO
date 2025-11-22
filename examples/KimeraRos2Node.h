@@ -4,6 +4,7 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "sensor_msgs/msg/image.hpp"
 #include "sensor_msgs/msg/imu.hpp"
+#include "std_msgs/msg/int64.hpp"
 #include "kimera-vio/pipeline/Pipeline.h"
 #include "kimera-vio/pipeline/Pipeline-definitions.h"
 
@@ -17,7 +18,9 @@ class KimeraRos2Node : public rclcpp::Node {
     private:
         rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr l_img_sub_;
         rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
+        rclcpp::Subscription<std_msgs::msg::Int64>::SharedPtr ts_diff_sub_;
         VIO::Pipeline::Ptr vio_pipeline_;
         VIO::VioParams vio_params_;
         uint64_t frame_count_;
+        int64_t ts_diff_;
 };
