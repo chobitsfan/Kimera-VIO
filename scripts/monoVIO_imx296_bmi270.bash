@@ -97,8 +97,9 @@ $BUILD_PATH/stereoVIOEuroc \
   --flagfile="$PARAMS_PATH/flags/VioBackend.flags" \
   --flagfile="$PARAMS_PATH/flags/RegularVioBackend.flags" \
   --flagfile="$PARAMS_PATH/flags/Visualizer3D.flags" \
-  --logtostderr=1 \
-  --colorlogtostderr=1 \
+  --logtostderr=0 \
+  --alsologtostderr=0 \
+  --colorlogtostderr=0 \
   --log_prefix=1 \
   --v=0 \
   --vmodule=Pipeline*=00 \

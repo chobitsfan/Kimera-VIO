@@ -77,6 +77,30 @@ class Ros2Display : public VIO::DisplayBase {
         std::shared_ptr<KimeraRos2Node> ros2_node_;
 };
 
+class MyLogSink: public google::LogSink {
+    public:
+        MyLogSink(const rclcpp::Logger &logger) : logger_(logger) {}
+        void send(google::LogSeverity severity, const char* full_filename, const char* base_filename, int line, const google::LogMessageTime& time, const char* message, size_t message_len) override {
+            switch (severity) {
+                case google::GLOG_WARNING:
+                    RCLCPP_WARN_STREAM(logger_, message);
+                    break;
+                case google::GLOG_ERROR:
+                    RCLCPP_ERROR_STREAM(logger_, message);
+                    break;
+                case google::GLOG_FATAL:
+                    RCLCPP_FATAL_STREAM(logger_, message);
+                    break;
+                case google::GLOG_INFO:
+                default:
+                    RCLCPP_INFO_STREAM(logger_, message);
+                    break;
+            }
+        }
+    private:
+        rclcpp::Logger logger_;
+};
+
 KimeraRos2Node::KimeraRos2Node(const VIO::VioParams& vio_params) : Node("kimera_vio"), vio_params_(vio_params) {
     frame_count_ = 0;
     ts_diff_ = 0;
@@ -125,6 +149,9 @@ int main(int argc, char* argv[]) {
 
   rclcpp::init(argc, argv);
   auto ros_node = std::make_shared<KimeraRos2Node>(vio_params);
+
+  MyLogSink my_log_sink{ros_node->get_logger()};
+  google::AddLogSink(&my_log_sink);
 
   auto visualizer_ = std::make_unique<Ros2Visualizer>(ros_node);
   auto display_ = std::make_unique<Ros2Display>(ros_node);
