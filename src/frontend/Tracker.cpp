@@ -364,7 +364,7 @@ TrackingStatusPose Tracker::geometricOutlierRejection2d2d(
                                  matches_ref_cur,
                                  &disparity)) {
         if (disparity < tracker_params_.disparityThreshold_) {
-          LOG(INFO) << "Low mono disparity.";
+          VLOG(1) << "Low mono disparity.";
           result.first = TrackingStatus::LOW_DISPARITY;
         }
       } else {
@@ -866,7 +866,7 @@ void Tracker::removeOutliersMono(const std::vector<int>& inliers,
   // Remove outliers.
   // outliers cannot be a vector of size_t because opengv uses a vector of
   // int.
-  for (const size_t& out : outliers) {
+  for (const int& out : outliers) {
     const auto& ref_kp_cur_kp = (*matches_ref_cur)[out];
     ref_frame->landmarks_.at(ref_kp_cur_kp.first) = -1;
     cur_frame->landmarks_.at(ref_kp_cur_kp.second) = -1;
@@ -875,7 +875,7 @@ void Tracker::removeOutliersMono(const std::vector<int>& inliers,
   // Store only inliers from now on.
   KeypointMatches outlier_free_matches_ref_cur;
   outlier_free_matches_ref_cur.reserve(inliers.size());
-  for (const size_t& in : inliers) {
+  for (const int& in : inliers) {
     outlier_free_matches_ref_cur.push_back((*matches_ref_cur)[in]);
   }
   *matches_ref_cur = outlier_free_matches_ref_cur;
@@ -894,7 +894,7 @@ void Tracker::removeOutliersStereo(const std::vector<int>& inliers,
 
   // Remove outliers: outliers cannot be a vector of size_t because opengv
   // uses a vector of int.
-  for (const size_t& out : outliers) {
+  for (const int& out : outliers) {
     const KeypointMatch& kp_match = (*matches_ref_cur)[out];
     ref_stereoFrame->right_keypoints_rectified_.at(kp_match.first).first =
         KeypointStatus::FAILED_ARUN;
@@ -910,7 +910,7 @@ void Tracker::removeOutliersStereo(const std::vector<int>& inliers,
   // Store only inliers from now on.
   KeypointMatches outlier_free_matches_ref_cur;
   outlier_free_matches_ref_cur.reserve(inliers.size());
-  for (const size_t& in : inliers) {
+  for (const int& in : inliers) {
     outlier_free_matches_ref_cur.push_back((*matches_ref_cur)[in]);
   }
   *matches_ref_cur = outlier_free_matches_ref_cur;

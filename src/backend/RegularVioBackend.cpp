@@ -211,7 +211,7 @@ bool RegularVioBackend::addVisualInertialStateAndOptimize(
   switch (kfTrackingStatus_mono) {
     case TrackingStatus::LOW_DISPARITY: {
       // Vehicle is not moving.
-      VLOG(0) << "Tracker has a LOW_DISPARITY status.";
+      VLOG(1) << "Tracker has a LOW_DISPARITY status.";
       VLOG(10) << "Add zero velocity and no motion factors.";
       addZeroVelocityPrior(curr_kf_id_);
       addNoMotionFactor(last_kf_id_, curr_kf_id_);
