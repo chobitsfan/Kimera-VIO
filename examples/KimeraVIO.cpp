@@ -15,6 +15,7 @@
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
+#include <turbojpeg.h>
 
 #include <chrono>
 #include <future>
@@ -35,6 +36,8 @@
 #include "KimeraRos2Node.h"
 #include "Ros2Visualizer.h"
 
+#define MY_ROS_JPG_BUF_SZ (60 * 1024)
+
 using namespace std::literals::chrono_literals;
 
 DEFINE_int32(dataset_type,
@@ -50,8 +53,15 @@ class Ros2Display : public VIO::DisplayBase {
     public:
         KIMERA_POINTER_TYPEDEFS(Ros2Display);
         KIMERA_DELETE_COPY_CONSTRUCTORS(Ros2Display);
-        Ros2Display(std::shared_ptr<KimeraRos2Node> ros2_node) : VIO::DisplayBase(VIO::DisplayType::kOpenCV), ros2_node_(ros2_node) {}
-        virtual ~Ros2Display() = default;
+        Ros2Display(std::shared_ptr<KimeraRos2Node> ros2_node) : VIO::DisplayBase(VIO::DisplayType::kOpenCV), ros2_node_(ros2_node) {
+            jpg_compressor = tjInitCompress();
+            //jpg_buf_sz = tjBufSize(640, 480, TJSAMP_420);
+            jpg_buf = tjAlloc(MY_ROS_JPG_BUF_SZ);
+        }
+        ~Ros2Display() {
+            tjFree(jpg_buf);
+            tjDestroy(jpg_compressor);
+        }
         /**
         * @brief spinOnce
         * Spins the display once to render the visualizer output.
@@ -60,7 +70,7 @@ class Ros2Display : public VIO::DisplayBase {
         void spinOnce(VIO::DisplayInputBase::UniquePtr&& viz_output) override {
             for (const VIO::ImageToDisplay& img_to_display : viz_output->images_to_display_) {
                 if (img_to_display.name_ == "feature_tracks") {
-                    sensor_msgs::msg::Image img_msg;
+                    /*sensor_msgs::msg::Image img_msg;
                     img_msg.header.stamp = ros2_node_->get_clock()->now();
                     img_msg.header.frame_id = "map";
                     img_msg.encoding = "bgr8";
@@ -69,12 +79,24 @@ class Ros2Display : public VIO::DisplayBase {
                     img_msg.width = img_to_display.image_.cols;
                     img_msg.step = img_to_display.image_.step;
                     img_msg.data.assign(img_to_display.image_.datastart, img_to_display.image_.dataend);
-                    ros2_node_->img_pub->publish(img_msg);
+                    ros2_node_->img_pub->publish(img_msg);*/
+                    unsigned long jpg_sz = MY_ROS_JPG_BUF_SZ;
+                    if (tjCompress2(jpg_compressor, img_to_display.image_.data, img_to_display.image_.cols, img_to_display.image_.step, img_to_display.image_.rows, TJPF_BGR, &jpg_buf, &jpg_sz, TJSAMP_420, 50, TJFLAG_FASTDCT) == 0) {
+                        sensor_msgs::msg::CompressedImage img_msg;
+                        img_msg.header.stamp = ros2_node_->get_clock()->now();
+                        img_msg.header.frame_id = "body";
+                        img_msg.format = "jpeg";
+                        img_msg.data.assign(jpg_buf, jpg_buf + jpg_sz);
+                        ros2_node_->img_pub->publish(img_msg);
+                    }
                 }
             }
         }
     private:
         std::shared_ptr<KimeraRos2Node> ros2_node_;
+        tjhandle jpg_compressor;
+        //unsigned long jpg_buf_sz;
+        unsigned char* jpg_buf;
 };
 
 class MyLogSink: public google::LogSink {
@@ -105,7 +127,7 @@ KimeraRos2Node::KimeraRos2Node(const VIO::VioParams& vio_params) : Node("kimera_
     frame_count_ = 0;
     ts_diff_ = 0;
     odo_pub = this->create_publisher<nav_msgs::msg::Odometry>("odometry", rclcpp::QoS(1).best_effort().durability_volatile());
-    img_pub = this->create_publisher<sensor_msgs::msg::Image>("tracking", rclcpp::QoS(1).best_effort().durability_volatile());
+    img_pub = this->create_publisher<sensor_msgs::msg::CompressedImage>("tracking/compressed", rclcpp::QoS(1).best_effort().durability_volatile());
 }
 
 KimeraRos2Node::~KimeraRos2Node() {

@@ -23,6 +23,9 @@ endif()
 message(STATUS "==============================================================")
 message(STATUS "====================  Dependencies ===========================")
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(TURBOJPEG REQUIRED libturbojpeg)
+
 find_package(Gflags REQUIRED)
 find_package(Glog 0.3.5 REQUIRED)
 find_package(GTSAM REQUIRED)
@@ -132,6 +135,7 @@ target_link_libraries(${PROJECT_NAME}
     ${GFLAGS_LIBRARIES}
     ${GLOG_LIBRARIES}
     ${DBoW2_LIBRARIES}
+    ${TURBOJPEG_LIBRARIES}
     gtsam
     gtsam_unstable
     opengv
@@ -143,6 +147,7 @@ target_include_directories(${PROJECT_NAME}
     ${GFLAGS_INCLUDE_DIRS}
     ${GLOG_INCLUDE_DIRS}
     ${GTSAM_INCLUDE_DIR}
+    ${TURBOJPEG_INCLUDE_DIRS}
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
