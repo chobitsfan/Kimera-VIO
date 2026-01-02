@@ -155,7 +155,7 @@ void KimeraRos2Node::init_sub(VIO::Pipeline::Ptr vio_pipeline) {
     //    ts_diff_ = msg->data;
     //};
     vio_pipeline_ = vio_pipeline;
-    l_img_sub_ = this->create_subscription<sensor_msgs::msg::Image>("mono_left", rclcpp::QoS(1).best_effort().durability_volatile(), l_img_cb);
+    l_img_sub_ = this->create_subscription<sensor_msgs::msg::Image>("mono_left", rclcpp::QoS(2).best_effort().durability_volatile(), l_img_cb);
     imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>("imu", rclcpp::QoS(200).durability_volatile(), imu_cb);
     //ts_diff_sub_ = this->create_subscription<std_msgs::msg::Int64>("ts_diff", rclcpp::QoS(1).best_effort().durability_volatile(), ts_diff_cb);
 }
