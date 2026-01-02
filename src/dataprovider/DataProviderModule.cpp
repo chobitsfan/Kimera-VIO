@@ -45,7 +45,7 @@ void DataProviderModule::logQueryResult(
       break;
     case ThreadsafeImuBuffer::QueryResult::kDataNotYetAvailable:
       if (!repeated_frame_) {
-        LOG_FIRST_N(INFO, 3)
+        LOG(WARNING)
             << "Data Provider waiting for IMU data newer than "
             << UtilsNumerical::NsecToSec(timestamp)
             << " [s] for the latest frame. This can be a normal occurrence, but "
