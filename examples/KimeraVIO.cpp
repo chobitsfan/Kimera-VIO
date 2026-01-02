@@ -36,7 +36,7 @@
 #include "KimeraRos2Node.h"
 #include "Ros2Visualizer.h"
 
-#define MY_ROS_JPG_BUF_SZ (60 * 1024)
+#define MY_ROS_JPG_BUF_SZ (50 * 1024)
 
 using namespace std::literals::chrono_literals;
 
@@ -55,7 +55,6 @@ class Ros2Display : public VIO::DisplayBase {
         KIMERA_DELETE_COPY_CONSTRUCTORS(Ros2Display);
         Ros2Display(std::shared_ptr<KimeraRos2Node> ros2_node) : VIO::DisplayBase(VIO::DisplayType::kOpenCV), ros2_node_(ros2_node) {
             jpg_compressor = tjInitCompress();
-            //jpg_buf_sz = tjBufSize(640, 480, TJSAMP_420);
             jpg_buf = tjAlloc(MY_ROS_JPG_BUF_SZ);
         }
         ~Ros2Display() {
@@ -81,7 +80,7 @@ class Ros2Display : public VIO::DisplayBase {
                     img_msg.data.assign(img_to_display.image_.datastart, img_to_display.image_.dataend);
                     ros2_node_->img_pub->publish(img_msg);*/
                     unsigned long jpg_sz = MY_ROS_JPG_BUF_SZ;
-                    if (tjCompress2(jpg_compressor, img_to_display.image_.data, img_to_display.image_.cols, img_to_display.image_.step, img_to_display.image_.rows, TJPF_BGR, &jpg_buf, &jpg_sz, TJSAMP_420, 50, TJFLAG_FASTDCT) == 0) {
+                    if (tjCompress2(jpg_compressor, img_to_display.image_.data, img_to_display.image_.cols, img_to_display.image_.step, img_to_display.image_.rows, TJPF_BGR, &jpg_buf, &jpg_sz, TJSAMP_420, 20, TJFLAG_FASTDCT) == 0) {
                         sensor_msgs::msg::CompressedImage img_msg;
                         img_msg.header.stamp = ros2_node_->get_clock()->now();
                         img_msg.header.frame_id = "body";
@@ -95,7 +94,6 @@ class Ros2Display : public VIO::DisplayBase {
     private:
         std::shared_ptr<KimeraRos2Node> ros2_node_;
         tjhandle jpg_compressor;
-        //unsigned long jpg_buf_sz;
         unsigned char* jpg_buf;
 };
 
@@ -125,7 +123,7 @@ class MyLogSink: public google::LogSink {
 
 KimeraRos2Node::KimeraRos2Node(const VIO::VioParams& vio_params) : Node("kimera_vio"), vio_params_(vio_params) {
     frame_count_ = 0;
-    ts_diff_ = 0;
+    pico_pi_t_offset = 0;
     odo_pub = this->create_publisher<nav_msgs::msg::Odometry>("odometry", rclcpp::QoS(1).best_effort().durability_volatile());
     img_pub = this->create_publisher<sensor_msgs::msg::CompressedImage>("tracking/compressed", rclcpp::QoS(1).best_effort().durability_volatile());
 }
@@ -151,13 +149,13 @@ void KimeraRos2Node::init_sub(VIO::Pipeline::Ptr vio_pipeline) {
         imu_accgyr(5) = msg->angular_velocity.z;
         vio_pipeline_->fillSingleImuQueue(VIO::ImuMeasurement(ts, imu_accgyr));
     };
-    //auto ts_diff_cb = [this](std_msgs::msg::Int64::UniquePtr msg) -> void {
-    //    ts_diff_ = msg->data;
-    //};
+    auto t_offset_cb = [this](std_msgs::msg::Int64::UniquePtr msg) -> void {
+        pico_pi_t_offset = msg->data;
+    };
     vio_pipeline_ = vio_pipeline;
-    l_img_sub_ = this->create_subscription<sensor_msgs::msg::Image>("mono_left", rclcpp::QoS(2).best_effort().durability_volatile(), l_img_cb);
+    l_img_sub_ = this->create_subscription<sensor_msgs::msg::Image>("mono_left", rclcpp::QoS(1).best_effort().durability_volatile(), l_img_cb);
     imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>("imu", rclcpp::QoS(200).durability_volatile(), imu_cb);
-    //ts_diff_sub_ = this->create_subscription<std_msgs::msg::Int64>("ts_diff", rclcpp::QoS(1).best_effort().durability_volatile(), ts_diff_cb);
+    t_offset_sub_ = this->create_subscription<std_msgs::msg::Int64>("pico_pi_t_offset", rclcpp::QoS(1).best_effort().durability_volatile(), t_offset_cb);
 }
 
 int main(int argc, char* argv[]) {
