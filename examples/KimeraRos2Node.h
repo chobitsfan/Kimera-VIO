@@ -6,6 +6,7 @@
 #include "sensor_msgs/msg/compressed_image.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 #include "std_msgs/msg/int64.hpp"
+#include "std_msgs/msg/float32.hpp"
 #include "kimera-vio/pipeline/Pipeline.h"
 #include "kimera-vio/pipeline/Pipeline-definitions.h"
 
@@ -16,6 +17,8 @@ class KimeraRos2Node : public rclcpp::Node {
         void init_sub(VIO::Pipeline::Ptr vio_pipeline);
         rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odo_pub;
         rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr img_pub;
+        rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr transl_uncertainty_pub;
+        rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr speed_uncertainty_pub;
         int64_t pico_pi_t_offset;
     private:
         rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr l_img_sub_;

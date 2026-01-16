@@ -126,6 +126,8 @@ KimeraRos2Node::KimeraRos2Node(const VIO::VioParams& vio_params) : Node("kimera_
     pico_pi_t_offset = 0;
     odo_pub = this->create_publisher<nav_msgs::msg::Odometry>("odometry", rclcpp::QoS(1).best_effort().durability_volatile());
     img_pub = this->create_publisher<sensor_msgs::msg::CompressedImage>("tracking/compressed", rclcpp::QoS(1).best_effort().durability_volatile());
+    transl_uncertainty_pub = this->create_publisher<std_msgs::msg::Float32>("transl_uncertainty", rclcpp::QoS(1).best_effort().durability_volatile());
+    speed_uncertainty_pub = this->create_publisher<std_msgs::msg::Float32>("speed_uncertainty", rclcpp::QoS(1).best_effort().durability_volatile());
 }
 
 KimeraRos2Node::~KimeraRos2Node() {

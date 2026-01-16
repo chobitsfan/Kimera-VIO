@@ -15,6 +15,7 @@ VIO::VisualizerOutput::UniquePtr Ros2Visualizer::spinOnce(const VIO::VisualizerI
         const gtsam::Rot3& rotation = pose.rotation();
         const gtsam::Quaternion& quaternion = rotation.toQuaternion();
         const gtsam::Vector3& velocity = viz_input.backend_output_->W_State_Blkf_.velocity_;
+        const gtsam::Matrix& cov = viz_input.backend_output_->state_covariance_lkf_.block(0, 0, 9, 9);
         nav_msgs::msg::Odometry odo_msg;
         odo_msg.header.stamp.sec = static_cast<int32_t>(viz_input.backend_output_->timestamp_ / 1000000000);
         odo_msg.header.stamp.nanosec = static_cast<uint32_t>(viz_input.backend_output_->timestamp_ % 1000000000);
@@ -31,6 +32,14 @@ VIO::VisualizerOutput::UniquePtr Ros2Visualizer::spinOnce(const VIO::VisualizerI
         odo_msg.twist.twist.linear.y = -velocity(0);
         odo_msg.twist.twist.linear.z = velocity(1);
         ros2_node_->odo_pub->publish(odo_msg);
+
+        float uncertainty = sqrtf(cov(3, 3) + cov(4, 4) + cov(5, 5));
+        std_msgs::msg::Float32 uncertainty_msg;
+        uncertainty_msg.data = uncertainty;
+        ros2_node_->transl_uncertainty_pub->publish(uncertainty_msg);
+        uncertainty = sqrtf(cov(6, 6) + cov(7, 7) + cov(8, 8));
+        uncertainty_msg.data = uncertainty;
+        ros2_node_->speed_uncertainty_pub->publish(uncertainty_msg);
     }
 
     // Return empty output, since in ROS, we only publish, not display...

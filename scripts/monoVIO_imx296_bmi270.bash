@@ -107,7 +107,8 @@ $BUILD_PATH/stereoVIOEuroc \
   --log_euroc_gt_data=0 \
   --save_frontend_images=0 \
   --visualize_frontend_images=1 \
-  --output_path="$OUTPUT_PATH"
+  --output_path="$OUTPUT_PATH" \
+  --compute_state_covariance=1
 
 # If in debug mode, you can run gdb to trace problems.
 #export PARAMS_PATH=../params/Euroc
