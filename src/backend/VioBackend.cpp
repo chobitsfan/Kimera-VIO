@@ -710,16 +710,11 @@ void VioBackend::computeStateCovariance() {
                              state_,
                              gtsam::Marginals::Factorization::CHOLESKY);
 
-  // Current state includes pose, velocity and imu biases.
+  // I only need pose
   gtsam::KeyVector keys;
   keys.push_back(gtsam::Symbol(kPoseSymbolChar, curr_kf_id_));
-  keys.push_back(gtsam::Symbol(kVelocitySymbolChar, curr_kf_id_));
-  keys.push_back(gtsam::Symbol(kImuBiasSymbolChar, curr_kf_id_));
 
-  // Return the marginal covariance matrix.
-  state_covariance_lkf_ = UtilsOpenCV::Covariance_bvx2xvb(
-      marginals.jointMarginalCovariance(keys)
-          .fullMatrix());  // 6 + 3 + 6 = 15x15matrix
+  state_covariance_lkf_ = marginals.jointMarginalCovariance(keys).fullMatrix();
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1434,7 +1429,7 @@ bool VioBackend::updateSmoother(Smoother::Result* result,
     gtsam::NonlinearFactorGraph nfg;
 
     // Only add priors on first state and the state nearest the failure
-    for (const gtsam::Symbol& key : prior_keys) {
+    for (const gtsam::Symbol key : prior_keys) {
       CHECK(values.exists(key));
       LOG(ERROR) << "Adding prior on key: " << key.chr() << key.index();
       switch (key.chr()) {

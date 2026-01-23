@@ -15,7 +15,19 @@ VIO::VisualizerOutput::UniquePtr Ros2Visualizer::spinOnce(const VIO::VisualizerI
         const gtsam::Rot3& rotation = pose.rotation();
         const gtsam::Quaternion& quaternion = rotation.toQuaternion();
         const gtsam::Vector3& velocity = viz_input.backend_output_->W_State_Blkf_.velocity_;
-        const gtsam::Matrix& cov = viz_input.backend_output_->state_covariance_lkf_.block(0, 0, 9, 9);
+        const gtsam::Matrix& pose_covariance_lkf = viz_input.backend_output_->state_covariance_lkf_;
+        gtsam::Matrix pose_cov_ros2(6, 6);
+        pose_cov_ros2.block<3, 3>(0, 0) = pose_covariance_lkf.block<3, 3>(3, 3);  // trans var
+        pose_cov_ros2.block<3, 3>(0, 3) = pose_covariance_lkf.block<3, 3>(3, 0);  // trans-rot cross
+        pose_cov_ros2.block<3, 3>(3, 0) = pose_covariance_lkf.block<3, 3>(0, 3);  // rot-trans cross
+        pose_cov_ros2.block<3, 3>(3, 3) = pose_covariance_lkf.block<3, 3>(0, 0);  // rot var
+        std::array<double, 36> pose_cov;
+        int idx = 0;
+        for (int i = 0; i < 6; i++) {
+          for (int j = 0; j < 6; j++) {
+            pose_cov[idx++] = pose_cov_ros2(i, j);
+          }
+        }
         nav_msgs::msg::Odometry odo_msg;
         odo_msg.header.stamp.sec = static_cast<int32_t>(viz_input.backend_output_->timestamp_ / 1000000000);
         odo_msg.header.stamp.nanosec = static_cast<uint32_t>(viz_input.backend_output_->timestamp_ % 1000000000);
@@ -28,18 +40,11 @@ VIO::VisualizerOutput::UniquePtr Ros2Visualizer::spinOnce(const VIO::VisualizerI
         odo_msg.pose.pose.orientation.y = -quaternion.x();
         odo_msg.pose.pose.orientation.z = quaternion.y();
         odo_msg.pose.pose.orientation.w = quaternion.w();
+        odo_msg.pose.covariance = pose_cov;
         odo_msg.twist.twist.linear.x = -velocity(2);
         odo_msg.twist.twist.linear.y = -velocity(0);
         odo_msg.twist.twist.linear.z = velocity(1);
         ros2_node_->odo_pub->publish(odo_msg);
-
-        float uncertainty = sqrtf(cov(3, 3) + cov(4, 4) + cov(5, 5));
-        std_msgs::msg::Float32 uncertainty_msg;
-        uncertainty_msg.data = uncertainty;
-        ros2_node_->transl_uncertainty_pub->publish(uncertainty_msg);
-        uncertainty = sqrtf(cov(6, 6) + cov(7, 7) + cov(8, 8));
-        uncertainty_msg.data = uncertainty;
-        ros2_node_->speed_uncertainty_pub->publish(uncertainty_msg);
     }
 
     // Return empty output, since in ROS, we only publish, not display...
