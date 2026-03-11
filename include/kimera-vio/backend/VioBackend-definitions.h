@@ -293,7 +293,8 @@ struct BackendOutput : public PipelinePayload {
                 const gtsam::Pose3& W_Pose_Blkf,
                 const Vector3& W_Vel_Blkf,
                 const ImuBias& imu_bias_lkf,
-                const gtsam::Matrix& state_covariance_lkf,
+                const gtsam::Matrix& pose_covariance_lkf,
+                const gtsam::Matrix& vel_covariance_lkf,
                 const FrameId& cur_kf_id,
                 const int& landmark_count,
                 const DebugVioInfo& debug_info,
@@ -302,7 +303,8 @@ struct BackendOutput : public PipelinePayload {
       : PipelinePayload(timestamp_kf),
         W_State_Blkf_(timestamp_kf, W_Pose_Blkf, W_Vel_Blkf, imu_bias_lkf),
         state_(state),
-        state_covariance_lkf_(state_covariance_lkf),
+        pose_covariance_lkf_(pose_covariance_lkf),
+        vel_covariance_lkf_(vel_covariance_lkf),
         factor_graph_(factor_graph),
         cur_kf_id_(cur_kf_id),
         landmark_count_(landmark_count),
@@ -313,7 +315,8 @@ struct BackendOutput : public PipelinePayload {
   BackendOutput(const VioNavStateTimestamped& vio_navstate_timestamped,
                 const gtsam::Values& state,
                 const gtsam::NonlinearFactorGraph& factor_graph,
-                const gtsam::Matrix& state_covariance_lkf,
+                const gtsam::Matrix& pose_covariance_lkf,
+                const gtsam::Matrix& vel_covariance_lkf,
                 const FrameId& cur_kf_id,
                 const int& landmark_count,
                 const DebugVioInfo& debug_info,
@@ -322,7 +325,8 @@ struct BackendOutput : public PipelinePayload {
       : PipelinePayload(vio_navstate_timestamped.timestamp_),
         W_State_Blkf_(vio_navstate_timestamped),
         state_(state),
-        state_covariance_lkf_(state_covariance_lkf),
+        pose_covariance_lkf_(pose_covariance_lkf),
+        vel_covariance_lkf_(vel_covariance_lkf),
         factor_graph_(factor_graph),
         cur_kf_id_(cur_kf_id),
         landmark_count_(landmark_count),
@@ -332,7 +336,8 @@ struct BackendOutput : public PipelinePayload {
 
   const VioNavStateTimestamped W_State_Blkf_;
   const gtsam::Values state_;
-  const gtsam::Matrix state_covariance_lkf_;
+  const gtsam::Matrix pose_covariance_lkf_;
+  const gtsam::Matrix vel_covariance_lkf_;
   const gtsam::NonlinearFactorGraph factor_graph_;
   const FrameId cur_kf_id_;
   const int landmark_count_;

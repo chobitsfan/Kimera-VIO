@@ -128,10 +128,6 @@ class VioBackend {
       LmkIdToLmkTypeMap* lmk_id_to_lmk_type_map = nullptr,
       const size_t& min_age = 2);
 
-  inline gtsam::Matrix getCurrentStateCovariance() const {
-    return state_covariance_lkf_;
-  }
-
   // Update covariance matrix using getCurrentStateCovariance()
   // NOT TESTED
   void computeStateCovariance();
@@ -446,9 +442,6 @@ class VioBackend {
   inline Pose3 getWPoseBLkfFromState() const {
     return W_Pose_B_lkf_from_state_;
   }
-  inline gtsam::Matrix getStateCovarianceLkf() const {
-    return state_covariance_lkf_;
-  }
   inline int getCurrKfId() const { return curr_kf_id_; }
   inline gtsam::Values getState() const { return state_; }
   inline int getLandmarkCount() const { return landmark_count_; }
@@ -476,7 +469,8 @@ class VioBackend {
   ImuBias imu_bias_prev_kf_;  //!< bias estimate at previous keyframe
 
   // State covariance. (initialize to zero)
-  gtsam::Matrix state_covariance_lkf_ = Eigen::MatrixXd::Zero(6, 6);
+  gtsam::Matrix pose_covariance_lkf_ = Eigen::MatrixXd::Zero(6, 6);
+  gtsam::Matrix vel_covariance_lkf_ = Eigen::MatrixXd::Zero(3, 3);
 
   // Vision params.
   gtsam::SmartStereoProjectionParams smart_factors_params_;

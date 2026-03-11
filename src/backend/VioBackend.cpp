@@ -217,7 +217,8 @@ BackendOutput::UniquePtr VioBackend::spinOnce(const BackendInput& input) {
         // TODO(Toni): Make all below optional!!
         state_,
         smoother_->getFactors(),
-        getCurrentStateCovariance(),
+        pose_covariance_lkf_,
+        vel_covariance_lkf_,
         curr_kf_id_,
         landmark_count_,
         debug_info_,
@@ -710,11 +711,11 @@ void VioBackend::computeStateCovariance() {
                              state_,
                              gtsam::Marginals::Factorization::CHOLESKY);
 
-  // I only need pose
-  gtsam::KeyVector keys;
-  keys.push_back(gtsam::Symbol(kPoseSymbolChar, curr_kf_id_));
+  gtsam::KeyVector pose_keys = {gtsam::Symbol(kPoseSymbolChar, curr_kf_id_)};
+  pose_covariance_lkf_ = marginals.jointMarginalCovariance(pose_keys).fullMatrix();
 
-  state_covariance_lkf_ = marginals.jointMarginalCovariance(keys).fullMatrix();
+  gtsam::KeyVector vel_keys = {gtsam::Symbol(kVelocitySymbolChar, curr_kf_id_)};
+  vel_covariance_lkf_ = marginals.jointMarginalCovariance(vel_keys).fullMatrix();
 }
 
 /* -------------------------------------------------------------------------- */

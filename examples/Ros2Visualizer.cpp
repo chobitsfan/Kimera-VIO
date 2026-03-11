@@ -15,7 +15,7 @@ VIO::VisualizerOutput::UniquePtr Ros2Visualizer::spinOnce(const VIO::VisualizerI
         const gtsam::Rot3& rotation = pose.rotation();
         const gtsam::Quaternion& quaternion = rotation.toQuaternion();
         const gtsam::Vector3& velocity = viz_input.backend_output_->W_State_Blkf_.velocity_;
-        const gtsam::Matrix& pose_covariance_lkf = viz_input.backend_output_->state_covariance_lkf_;
+        const gtsam::Matrix& pose_covariance_lkf = viz_input.backend_output_->pose_covariance_lkf_;
         gtsam::Matrix pose_cov_ros2(6, 6);
         pose_cov_ros2.block<3, 3>(0, 0) = pose_covariance_lkf.block<3, 3>(3, 3);  // trans var
         pose_cov_ros2.block<3, 3>(0, 3) = pose_covariance_lkf.block<3, 3>(3, 0);  // trans-rot cross
@@ -26,6 +26,14 @@ VIO::VisualizerOutput::UniquePtr Ros2Visualizer::spinOnce(const VIO::VisualizerI
         for (int i = 0; i < 6; i++) {
           for (int j = 0; j < 6; j++) {
             pose_cov[idx++] = pose_cov_ros2(i, j);
+          }
+        }
+        gtsam::Matrix vel_cov = viz_input.backend_output_->vel_covariance_lkf_;
+        std::array<double, 36> twist_cov;
+        idx = 0;
+        for (int i = 0; i < 3; i++) {
+          for (int j = 0; j < 3; j++) {
+            twist_cov[idx++] = vel_cov(i, j);
           }
         }
         nav_msgs::msg::Odometry odo_msg;
@@ -44,6 +52,7 @@ VIO::VisualizerOutput::UniquePtr Ros2Visualizer::spinOnce(const VIO::VisualizerI
         odo_msg.twist.twist.linear.x = -velocity(2);
         odo_msg.twist.twist.linear.y = -velocity(0);
         odo_msg.twist.twist.linear.z = velocity(1);
+        odo_msg.twist.covariance = twist_cov;
         ros2_node_->odo_pub->publish(odo_msg);
     }
 
