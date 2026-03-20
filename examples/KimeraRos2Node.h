@@ -25,4 +25,6 @@ class KimeraRos2Node : public rclcpp::Node {
         VIO::Pipeline::Ptr vio_pipeline_;
         VIO::VioParams vio_params_;
         uint64_t frame_count_;
+        cv::Ptr<cv::CLAHE> clahe_;
+        cv::Mat clahe_dst_;
 };

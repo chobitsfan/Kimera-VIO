@@ -126,6 +126,7 @@ KimeraRos2Node::KimeraRos2Node(const VIO::VioParams& vio_params) : Node("kimera_
     pico_pi_t_offset = 0;
     odo_pub = this->create_publisher<nav_msgs::msg::Odometry>("odometry", rclcpp::QoS(1).best_effort().durability_volatile());
     img_pub = this->create_publisher<sensor_msgs::msg::CompressedImage>("tracking/compressed", rclcpp::QoS(1).best_effort().durability_volatile());
+    clahe_ = cv::createCLAHE(2.0, cv::Size(8, 8));
 }
 
 KimeraRos2Node::~KimeraRos2Node() {
@@ -135,7 +136,8 @@ void KimeraRos2Node::init_sub(VIO::Pipeline::Ptr vio_pipeline) {
     auto l_img_cb = [this](sensor_msgs::msg::Image::UniquePtr msg) -> void {
         int64_t ts = msg->header.stamp.sec * 1000000000LL + msg->header.stamp.nanosec;
         cv::Mat mat(msg->height, msg->width, CV_8UC1, const_cast<uint8_t*>(msg->data.data()), msg->step);
-        vio_pipeline_->fillLeftFrameQueue(std::make_unique<VIO::Frame>(frame_count_, ts, vio_params_.camera_params_.at(0), mat.clone()));
+        clahe_->apply(mat, clahe_dst_);
+        vio_pipeline_->fillLeftFrameQueue(std::make_unique<VIO::Frame>(frame_count_, ts, vio_params_.camera_params_.at(0), clahe_dst_.clone()));
         frame_count_++;
     };
     auto imu_cb = [this](sensor_msgs::msg::Imu::UniquePtr msg) -> void {
