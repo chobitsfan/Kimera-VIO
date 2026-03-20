@@ -348,7 +348,7 @@ TrackingStatusPose Tracker::geometricOutlierRejection2d2d(
 
     // TODO(Toni): should we remove outliers if few matches?
     //! Remove correspondences classified as outliers
-    if (result.first != TrackingStatus::FEW_MATCHES) {
+    if (result.first != TrackingStatus::FEW_MATCHES && result.first != TrackingStatus::INVALID) {
       removeOutliersMono(inliers, ref_frame, cur_frame, &matches_ref_cur);
     }
 
