@@ -22,7 +22,7 @@ use_harris_detector: 0
 k: 0.04
 
 # FAST detector specific parameters [10, 20]
-fast_thresh: 10
+fast_thresh: 20
 
 equalizeImage: 0
 nominalBaseline: 0.11
