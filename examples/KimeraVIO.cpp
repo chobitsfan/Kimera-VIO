@@ -21,6 +21,8 @@
 #include <future>
 #include <memory>
 #include <utility>
+#include <sys/mman.h>
+#include <fcntl.h>
 
 #include "std_msgs/msg/header.hpp"
 
@@ -168,6 +170,23 @@ int main(int argc, char* argv[]) {
 
   // Parse VIO parameters from gflags.
   VIO::VioParams vio_params(FLAGS_params_folder_path);
+
+  if (vio_params.backend_params_->autoInitialize_ == 0) {
+    double bias[6];
+    FILE* file_ptr = fopen("/tmp/imu_bias", "rb");
+    fread(bias, sizeof(double), 6, file_ptr);
+    fclose(file_ptr);
+    gtsam::imuBias::ConstantBias imu_bias = gtsam::imuBias::ConstantBias(Eigen::Map<gtsam::Vector6>(bias));
+    int shm_fd = shm_open("pos_v_ned", O_RDONLY, 0666);
+    float* shm_ptr = (float*)mmap(0, 10*sizeof(float), PROT_READ, MAP_SHARED, shm_fd, 0);
+    gtsam::Pose3 pose(gtsam::Rot3::Quaternion(shm_ptr[0], shm_ptr[2], -shm_ptr[3], -shm_ptr[1]), gtsam::Point3(shm_ptr[5], -shm_ptr[6], -shm_ptr[4]));
+    gtsam::Vector3 v(shm_ptr[8], -shm_ptr[9], -shm_ptr[7]);
+    munmap(shm_ptr, 10*sizeof(float));
+    close(shm_fd);
+
+    VIO::VioNavState nav_state(pose, v, imu_bias);
+    vio_params.backend_params_->initial_ground_truth_state_ = nav_state;
+  }
 
   rclcpp::init(argc, argv);
   auto ros_node = std::make_shared<KimeraRos2Node>(vio_params);

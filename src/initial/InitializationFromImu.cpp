@@ -48,6 +48,17 @@ VioNavState InitializationFromImu::getInitialStateEstimate(
 
   // Guess IMU bias. Assumes static vehicle!
   ImuBias imu_bias_guess = guessImuBias(mean_accgyr, local_gravity);
+  //imu_bias_guess.print();
+  FILE *file_ptr = fopen("/tmp/imu_bias", "wb");
+  fwrite(imu_bias_guess.vector().data(), sizeof(double), 6, file_ptr);
+  fclose(file_ptr);
+  /*double a[6];
+  file_ptr = fopen("imu_bias.bin", "rb");
+  fread(a, sizeof(double), 6, file_ptr);
+  fclose(file_ptr);
+  Eigen::Map<gtsam::Vector6> v6(a);
+  ImuBias bias = ImuBias(v6);
+  bias.print();*/
 
   // Return estimated state.
   return VioNavState(initial_pose_guess, velocity_guess, imu_bias_guess);
