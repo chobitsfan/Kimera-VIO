@@ -6,10 +6,10 @@ backend_modality: 0
 #INITIALIZATION PARAMETERS
 autoInitialize: 0
 roundOnAutoInitialize: 0
-initialPositionSigma: 0.1
+initialPositionSigma: 1.0
 initialRollPitchSigma: 0.174533 # 10.0/180.0*M_PI
-initialYawSigma: 0.0174533 # 1.0/180.0*M_PI
-initialVelocitySigma: 0.1
+initialYawSigma: 0.174533 # 10.0/180.0*M_PI
+initialVelocitySigma: 1.0
 initialAccBiasSigma: 0.1
 initialGyroBiasSigma: 0.01
 

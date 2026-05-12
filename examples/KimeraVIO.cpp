@@ -177,14 +177,18 @@ int main(int argc, char* argv[]) {
     fread(bias, sizeof(double), 6, file_ptr);
     fclose(file_ptr);
     gtsam::imuBias::ConstantBias imu_bias = gtsam::imuBias::ConstantBias(Eigen::Map<gtsam::Vector6>(bias));
+#if 0
     int shm_fd = shm_open("pos_v_ned", O_RDONLY, 0666);
     float* shm_ptr = (float*)mmap(0, 10*sizeof(float), PROT_READ, MAP_SHARED, shm_fd, 0);
     gtsam::Pose3 pose(gtsam::Rot3::Quaternion(shm_ptr[0], shm_ptr[2], -shm_ptr[3], -shm_ptr[1]), gtsam::Point3(shm_ptr[5], -shm_ptr[6], -shm_ptr[4]));
     gtsam::Vector3 v(shm_ptr[8], -shm_ptr[9], -shm_ptr[7]);
     munmap(shm_ptr, 10*sizeof(float));
     close(shm_fd);
-
     VIO::VioNavState nav_state(pose, v, imu_bias);
+#else
+    VIO::VioNavState nav_state(gtsam::Pose3(), gtsam::Vector3::Zero(), imu_bias);
+#endif
+
     vio_params.backend_params_->initial_ground_truth_state_ = nav_state;
   }
 

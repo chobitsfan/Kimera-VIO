@@ -87,8 +87,8 @@ echo """ Launching:
 $BUILD_PATH/stereoVIOEuroc \
   --dataset_type="$DATASET_TYPE" \
   --dataset_path="$DATASET_PATH" \
-  --initial_k=50 \
-  --final_k=10000 \
+  --initial_k=1 \
+  --final_k=20000 \
   --params_folder_path="$PARAMS_PATH" \
   --use_lcd="$USE_LCD" \
   --vocabulary_path="$VOCABULARY_PATH/ORBvoc.yml" \
