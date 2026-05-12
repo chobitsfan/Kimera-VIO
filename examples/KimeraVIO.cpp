@@ -186,7 +186,12 @@ int main(int argc, char* argv[]) {
     close(shm_fd);
     VIO::VioNavState nav_state(pose, v, imu_bias);
 #else
-    VIO::VioNavState nav_state(gtsam::Pose3(), gtsam::Vector3::Zero(), imu_bias);
+    int shm_fd = shm_open("pos_v_ned", O_RDONLY, 0666);
+    float* shm_ptr = (float*)mmap(0, 10*sizeof(float), PROT_READ, MAP_SHARED, shm_fd, 0);
+    gtsam::Pose3 fc_pose(gtsam::Rot3::Quaternion(shm_ptr[0], shm_ptr[2], -shm_ptr[3], -shm_ptr[1]), gtsam::Point3(0, 0, 0));
+    munmap(shm_ptr, 10*sizeof(float));
+    close(shm_fd);
+    VIO::VioNavState nav_state(fc_pose, gtsam::Vector3::Zero(), imu_bias);
 #endif
 
     vio_params.backend_params_->initial_ground_truth_state_ = nav_state;
