@@ -174,6 +174,10 @@ int main(int argc, char* argv[]) {
   if (vio_params.backend_params_->autoInitialize_ == 0) {
     double bias[6];
     FILE* file_ptr = fopen("/tmp/imu_bias", "rb");
+    if (file_ptr == NULL) {
+        printf("autoInitialize = 0 but no imu_bias file\n");
+        return 0;
+    }
     fread(bias, sizeof(double), 6, file_ptr);
     fclose(file_ptr);
     gtsam::imuBias::ConstantBias imu_bias = gtsam::imuBias::ConstantBias(Eigen::Map<gtsam::Vector6>(bias));
