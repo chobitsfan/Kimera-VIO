@@ -28,16 +28,16 @@ VIO::VisualizerOutput::UniquePtr Ros2Visualizer::spinOnce(const VIO::VisualizerI
         odo_msg.header.frame_id = "map";
         odo_msg.child_frame_id = "map";
         odo_msg.pose.pose.position.x = -pose.z();
-        odo_msg.pose.pose.position.y = -pose.x();
-        odo_msg.pose.pose.position.z = pose.y();
+        odo_msg.pose.pose.position.y = pose.y();
+        odo_msg.pose.pose.position.z = pose.x();
         odo_msg.pose.pose.orientation.x = -quaternion.z();
-        odo_msg.pose.pose.orientation.y = -quaternion.x();
-        odo_msg.pose.pose.orientation.z = quaternion.y();
+        odo_msg.pose.pose.orientation.y = quaternion.y();
+        odo_msg.pose.pose.orientation.z = quaternion.x();
         odo_msg.pose.pose.orientation.w = quaternion.w();
         Eigen::Map<Eigen::Matrix<double, 6, 6, Eigen::RowMajor>>(odo_msg.pose.covariance.data()) = pose_cov_ros2;
         odo_msg.twist.twist.linear.x = -velocity(2);
-        odo_msg.twist.twist.linear.y = -velocity(0);
-        odo_msg.twist.twist.linear.z = velocity(1);
+        odo_msg.twist.twist.linear.y = velocity(1);
+        odo_msg.twist.twist.linear.z = velocity(0);
         odo_msg.twist.covariance.fill(0);
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++)
