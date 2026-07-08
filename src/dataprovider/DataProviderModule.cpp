@@ -124,10 +124,8 @@ DataProviderModule::getTimeSyncedImuMeasurements(const Timestamp& timestamp,
   // imu_time_shift_ can be externally, asynchronously modified.
   // Caching here prevents a nasty race condition and avoids locking
   const Timestamp curr_imu_time_shift = imu_time_shift_ns_;
-  const Timestamp imu_timestamp_last_frame =
-      timestamp_last_frame_ + imu_timestamp_correction_ + curr_imu_time_shift;
-  const Timestamp imu_timestamp_curr_frame =
-      timestamp + imu_timestamp_correction_ + curr_imu_time_shift;
+  const Timestamp imu_timestamp_last_frame = timestamp_last_frame_;
+  const Timestamp imu_timestamp_curr_frame = timestamp;
 
   // NOTE: using interpolation on both borders instead of just the upper 
   // as before because without a measurement on the left-hand side we are 

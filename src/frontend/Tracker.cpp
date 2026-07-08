@@ -1021,21 +1021,12 @@ cv::Mat Tracker::getTrackerImage(const Frame& ref_frame,
                                  const Frame& cur_frame,
                                  const KeypointsCV& extra_corners_gray,
                                  const KeypointsCV& extra_corners_blue) const {
-  cv::Mat img_rgb(cur_frame.img_.size(), CV_8U);
+  cv::Mat img_rgb(cur_frame.img_.size(), CV_8UC3);
   cv::cvtColor(cur_frame.img_, img_rgb, cv::COLOR_GRAY2RGB);
 
-  static const cv::Scalar gray(0, 255, 255);
   static const cv::Scalar red(0, 0, 255);
   static const cv::Scalar green(0, 255, 0);
   static const cv::Scalar blue(255, 0, 0);
-
-  // Add extra corners if desired.
-  for (const auto& px : extra_corners_gray) {
-    cv::circle(img_rgb, px, 4, gray, 2);
-  }
-  for (const auto& px : extra_corners_blue) {
-    cv::circle(img_rgb, px, 4, blue, 2);
-  }
 
   // Add all keypoints in cur_frame with the tracks.
   for (size_t i = 0; i < cur_frame.keypoints_.size(); ++i) {
