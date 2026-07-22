@@ -155,8 +155,8 @@ void KimeraRos2Node::init_sub(VIO::Pipeline::Ptr vio_pipeline) {
         pico_pi_t_offset = msg->data;
     };
     vio_pipeline_ = vio_pipeline;
-    l_img_sub_ = this->create_subscription<sensor_msgs::msg::Image>("mono_left", rclcpp::QoS(1).best_effort().durability_volatile(), l_img_cb);
-    imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>("imu", rclcpp::QoS(200).durability_volatile(), imu_cb);
+    l_img_sub_ = this->create_subscription<sensor_msgs::msg::Image>("mono_left", rclcpp::QoS(2).best_effort().durability_volatile(), l_img_cb);
+    imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>("imu", rclcpp::QoS(400).durability_volatile(), imu_cb);
     t_offset_sub_ = this->create_subscription<std_msgs::msg::Int64>("pico_pi_t_offset", rclcpp::QoS(1).best_effort().durability_volatile(), t_offset_cb);
 }
 
