@@ -29,7 +29,6 @@
 #include "kimera-vio/common/VioNavState.h"
 #include "kimera-vio/dataprovider/MonoDataProviderModule.h"
 #include "kimera-vio/frontend/VisionImuFrontendModule.h"
-#include "kimera-vio/loopclosure/LcdModule.h"
 #include "kimera-vio/mesh/MesherModule.h"
 #include "kimera-vio/utils/ThreadsafeQueue.h"
 #include "kimera-vio/visualizer/Display.h"
@@ -44,7 +43,6 @@ DECLARE_bool(visualize_lmk_type);
 DECLARE_int32(viz_type);
 DECLARE_bool(deterministic_random_number_generator);
 DECLARE_int32(min_num_obs_for_mesher_points);
-DECLARE_bool(use_lcd);
 
 namespace VIO {
 
@@ -89,8 +87,6 @@ class Pipeline {
     CHECK(data_provider_module_);
     data_provider_module_->fillExternalOdometryQueue(odom_measurement);
   }
-
-  inline LcdModule* getLcdModule() const { return lcd_module_.get(); }
 
  public:
   /**
@@ -173,16 +169,6 @@ class Pipeline {
    */
   inline std::string printStatistics() const {
     return utils::Statistics::Print();
-  }
-
-  inline void registerLcdOutputCallback(
-      const LcdModule::OutputCallback& callback) {
-    if (lcd_module_) {
-      lcd_module_->registerOutputCallback(callback);
-    } else {
-      LOG(WARNING) << "Attempt to register LCD/PGO callback, but no "
-                   << "LoopClosureDetector member is active in pipeline.";
-    }
   }
 
  protected:
@@ -278,9 +264,6 @@ class Pipeline {
   //! Mesher
   MesherModule::UniquePtr mesher_module_;
 
-  //! Loop Closure Detector
-  LcdModule::UniquePtr lcd_module_;
-
   //! Visualizer: builds images to be displayed
   VisualizerModule::UniquePtr visualizer_module_;
 
@@ -301,7 +284,6 @@ class Pipeline {
   std::unique_ptr<std::thread> frontend_thread_ = {nullptr};
   std::unique_ptr<std::thread> backend_thread_ = {nullptr};
   std::unique_ptr<std::thread> mesher_thread_ = {nullptr};
-  std::unique_ptr<std::thread> lcd_thread_ = {nullptr};
   std::unique_ptr<std::thread> visualizer_thread_ = {nullptr};
 };
 

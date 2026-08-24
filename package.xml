@@ -9,9 +9,7 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>dbow2_catkin</depend>
   <depend>gtsam</depend>
-  <depend>kimera_rpgo</depend>
   <depend>libgflags-dev</depend>
   <depend>libgoogle-glog-dev</depend>
   <!-- KimeraVIO needs opencv >= 3.3.1, yet ROS uses 3.2.0.

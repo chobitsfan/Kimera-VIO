@@ -22,7 +22,6 @@
 #include "kimera-vio/backend/VioBackendFactory.h"
 #include "kimera-vio/frontend/MonoVisionImuFrontend-definitions.h"
 #include "kimera-vio/frontend/VisionImuFrontendFactory.h"
-#include "kimera-vio/loopclosure/LcdFactory.h"
 #include "kimera-vio/mesh/MesherFactory.h"
 #include "kimera-vio/pipeline/Pipeline.h"
 #include "kimera-vio/utils/Statistics.h"
@@ -37,8 +36,7 @@ namespace VIO {
 
 MonoImuPipeline::MonoImuPipeline(const VioParams& params,
                                  Visualizer3D::UniquePtr&& visualizer,
-                                 DisplayBase::UniquePtr&& displayer,
-                                 PreloadedVocab::Ptr&& preloaded_vocab)
+                                 DisplayBase::UniquePtr&& displayer)
     : Pipeline(params), camera_(nullptr) {
   // CHECK_EQ(params.camera_params_.size(), 1u) << "Need one camera for
   // MonoImuPipeline.";
@@ -173,35 +171,11 @@ MonoImuPipeline::MonoImuPipeline(const VioParams& params,
   //                 std::placeholders::_1));
   // }
 
-  if (FLAGS_use_lcd) {
-    lcd_module_ = std::make_unique<LcdModule>(
-        parallel_run_,
-        LcdFactory::createLcd(LoopClosureDetectorType::BoW,
-                              params.lcd_params_,
-                              camera_->getCamParams(),
-                              camera_->getBodyPoseCam(),
-                              std::nullopt,
-                              std::nullopt,
-                              std::nullopt,
-                              FLAGS_log_output,
-                              std::move(preloaded_vocab)));
-    //! Register input callbacks
-    vio_backend_module_->registerOutputCallback(
-        std::bind(&LcdModule::fillBackendQueue,
-                  std::ref(*CHECK_NOTNULL(lcd_module_.get())),
-                  std::placeholders::_1));
-    vio_frontend_module_->registerOutputCallback(
-        std::bind(&LcdModule::fillFrontendQueue,
-                  std::ref(*CHECK_NOTNULL(lcd_module_.get())),
-                  std::placeholders::_1));
-  }
-
   if (FLAGS_visualize) {
     visualizer_module_ = std::make_unique<VisualizerModule>(
         //! Send ouput of visualizer to the display_input_queue_
         &display_input_queue_,
         parallel_run_,
-        FLAGS_use_lcd,
         // Use given visualizer if any
         visualizer ? std::move(visualizer)
                    : VisualizerFactory::createVisualizer(

@@ -19,8 +19,6 @@ Alternatively, you may install the dependencies and Kimera from \"source\" as de
   - [OpenCV](https://github.com/opencv/opencv) >= 3.4
   - [OpenGV](https://github.com/laurentkneip/opengv)
   - [Glog](http://rpg.ifi.uzh.ch/docs/glog.html), [Gflags](https://gflags.github.io/gflags/), [Gtest](https://github.com/google/googletest/blob/master/googletest/docs/primer.md) (installed automagically).
-  - [DBoW2](https://github.com/dorian3d/DBoW2)
-  - [Kimera-RPGO](https://github.com/MIT-SPARK/Kimera-RPGO)
 
 > Installation instructions below.
 
@@ -82,8 +80,8 @@ cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_BUILD_TYPE=Release -DGTSAM_USE_S
 Ensure that:
 - TBB is enabled: check for `--   Use Intel TBB                  : Yes` after running `cmake`.
 - Compilation is in Release mode: check for `--   Build type                     : Release` after running `cmake`.
+- `Rot3 retract is full ExpMap` is set to enabled, and `Pose3 retract is full ExpMap` is also set to enabled.
 - Use GTSAM's Eigen, **not** the system-wide one (OpenGV and GTSAM must use same Eigen, see OpenGV install instructions below).
-- `Rot3 retract is full ExpMap` is set to enabled, and `Pose3 retract is full ExpMap` is also set to enabled. Without these flags, Kimera-RPGO does not optimize the pose-graph well and may produce incorrect results.
 
 Compile and install GTSAM:
 ```bash
@@ -177,28 +175,6 @@ sudo make -j $(nproc) install
 
 > Alternatively, replace `$(nproc)` by the number of available cores in your computer.
 
-## Install DBoW2
-Clone the repo and run cmake:
-```bash
-git clone https://github.com/dorian3d/DBoW2.git
-cd DBoW2
-mkdir build
-cd build
-cmake ..
-sudo make -j $(nproc) install
-```
-
-## Install Kimera-RPGO
-Clone the repo and run cmake:
-```bash
-git clone https://github.com/MIT-SPARK/Kimera-RPGO.git
-cd Kimera-RPGO
-mkdir build
-cd build
-cmake ..
-sudo make -j $(nproc)
-```
-
 ## Glog/Gflags
 
 Linux
@@ -213,14 +189,6 @@ brew install gflags glog
 
 ## Gtest
 Gtest will be automatically downloaded using cmake.
-
-## Bag-of-Words Vocabulary
-
-For loop closure detection, we use a bag-of-words method based on [DBoW2](https://github.com/dorian3d/DBoW2). This requires a vocabulary of visual words. If you wish to use the loop closure detection module, you must download a vocabulary file.
-
-We have packaged a large vocabulary made by the creators of [ORB_SLAM_2](https://github.com/raulmur/ORB_SLAM2) along with their license at [this location](https://www.dropbox.com/s/lyo0qgbdxn6eg6o/ORBvoc.zip?dl=0). Follow that link to download the files, and put them in the [vocabulary](/vocabulary/) directory.
-
-Alternatively, cmake will automatically download these files for you when you `make` Kimera-VIO. Follow the instructions below:
 
 ## Install Kimera-VIO
 

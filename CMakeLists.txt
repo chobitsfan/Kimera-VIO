@@ -32,8 +32,6 @@ find_package(GTSAM REQUIRED)
 find_package(GTSAM_UNSTABLE REQUIRED)
 find_package(opengv REQUIRED)
 find_package(OpenCV REQUIRED)
-find_package(DBoW2 REQUIRED)
-find_package(KimeraRPGO REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
@@ -50,32 +48,6 @@ endif()
 
 ### External Dependencies
 include(ExternalProject)
-
-### Download and unzip the vocabularly file
-if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/vocabulary/ORBvoc.yml)
-  message(STATUS "Downloading vocabulary file from dropbox.")
-  file(DOWNLOAD
-       http://www.dropbox.com/s/lyo0qgbdxn6eg6o/ORBvoc.zip?dl=1
-       ${CMAKE_CURRENT_SOURCE_DIR}/vocabulary/ORBvoc.zip
-       SHOW_PROGRESS
-       STATUS orbvoc_download_success
-       TIMEOUT 60)
-  if(orbvoc_download_success)
-    message(STATUS "Unzipping vocabulary file.")
-
-    execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_CURRENT_SOURCE_DIR}/vocabulary/ORBvoc.zip
-                            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vocabulary/)
-    message(STATUS "Moving vocabulary file.")
-    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory
-                    ${CMAKE_CURRENT_SOURCE_DIR}/vocabulary/ORBvoc/
-                    ${CMAKE_CURRENT_SOURCE_DIR}/vocabulary/)
-    execute_process(COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_CURRENT_SOURCE_DIR}/vocabulary/ORBvoc/)
-  else(orbvoc_download_success)
-    message(STATUS "Failed to download vocabulary file. Please download manually.")
-  endif(orbvoc_download_success)
-else()
-  message(STATUS "Vocabulary file exists, will not download.")
-endif()
 
 ### Handle third party libraries
 add_subdirectory(third_party)
@@ -113,9 +85,6 @@ add_subdirectory(src/pipeline)
 ### Add source code for common
 add_subdirectory(include/kimera-vio/common)
 add_subdirectory(src/common)
-### Add source code for loopclosure
-add_subdirectory(include/kimera-vio/loopclosure)
-add_subdirectory(src/loopclosure)
 ### Add source code for logging
 add_subdirectory(include/kimera-vio/logging)
 add_subdirectory(src/logging)
@@ -128,13 +97,11 @@ add_subdirectory(src/visualizer)
 
 target_link_libraries(${PROJECT_NAME}
   PRIVATE
-    KimeraRPGO
     triangle::triangle
   PUBLIC
     ${OpenCV_LIBRARIES}
     ${GFLAGS_LIBRARIES}
     ${GLOG_LIBRARIES}
-    ${DBoW2_LIBRARIES}
     ${TURBOJPEG_LIBRARIES}
     gtsam
     gtsam_unstable
@@ -142,7 +109,6 @@ target_link_libraries(${PROJECT_NAME}
 )
 target_include_directories(${PROJECT_NAME}
   PUBLIC
-    ${DBoW2_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
     ${GFLAGS_INCLUDE_DIRS}
     ${GLOG_INCLUDE_DIRS}
@@ -232,13 +198,11 @@ if(KIMERA_BUILD_TESTS)
     tests/testCodesignIdeas.cpp
     tests/testExternalOdometryFrontend.cpp
     tests/testFrame.cpp # NEEDS UPDATE
-    tests/testFrameCache.cpp
     tests/testGeneralParallelPlaneRegularBasicFactor.cpp
     tests/testGeneralParallelPlaneRegularTangentSpaceFactor.cpp
     tests/testImuFrontend.cpp
     tests/testImuParams.cpp
     # tests/testKittiDataProvider.cpp # TODO
-    tests/testLoopClosureDetector.cpp
     tests/testLogger.cpp
     tests/testMesher.cpp # rotten
     tests/testMesh.cpp
