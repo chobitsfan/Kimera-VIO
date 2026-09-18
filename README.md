@@ -80,8 +80,6 @@ Tested on Ubuntu 20.04.
 - [OpenGV](https://github.com/laurentkneip/opengv)
 - [Glog](http://rpg.ifi.uzh.ch/docs/glog.html), [Gflags](https://gflags.github.io/gflags/)
 - [Gtest](https://github.com/google/googletest/blob/master/googletest/docs/primer.md) (installed automagically).
-- [DBoW2](https://github.com/dorian3d/DBoW2)
-- [Kimera-RPGO](https://github.com/MIT-SPARK/Kimera-RPGO)
 - [ANMS](https://github.com/BAILOOL/ANMS-Codes) (source files in `src/frontend/feature-detector/anms`, used for adaptive non-max suppression).
 
 > Note: if you want to avoid building all dependencies yourself, we provide a docker image that will install them for you. Check installation instructions in [docs/kimera_vio_install.md](./docs/kimera_vio_install.md).
@@ -95,11 +93,6 @@ Find how to install Kimera-VIO and its dependencies here: **[Installation instru
 # 2. Usage
 
 ## General tips
-
-The LoopClosureDetector (and PGO) module is disabled by default. If you wish to run the pipeline with loop-closure detection enabled, set the `use_lcd` flag to true. For the example script, this is done by passing `-lcd` at commandline like so:
-```bash
-./scripts/stereoVIOEUROC.bash -lcd
-```
 
 To log output, set the `log_output` flag to true. For the script, this is done with the `-log` commandline argument. By default, log files will be saved in [output_logs](output_logs/).
 

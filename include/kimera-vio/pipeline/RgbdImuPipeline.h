@@ -29,8 +29,7 @@ class RgbdImuPipeline : public Pipeline {
  public:
   RgbdImuPipeline(const VioParams& params,
                   Visualizer3D::UniquePtr&& visualizer = nullptr,
-                  DisplayBase::UniquePtr&& displayer = nullptr,
-                  PreloadedVocab::Ptr&& preloaded_vocab = nullptr);
+                  DisplayBase::UniquePtr&& displayer = nullptr);
 
   ~RgbdImuPipeline() = default;
 

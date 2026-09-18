@@ -51,9 +51,6 @@ class VioParamsFixture : public ::testing::Test {
     parsePipelineParams(FLAGS_test_data_path +
                             "/EurocParams/FrontendParams.yaml",
                         &frontend_params_);
-    parsePipelineParams(FLAGS_test_data_path +
-                            "/EurocParams/LcdParams.yaml",
-                        &lcd_params_);
   }
 
   // Default Parms
@@ -63,7 +60,6 @@ class VioParamsFixture : public ::testing::Test {
   BackendParams backend_params_;
   RegularVioBackendParams regular_backend_params_;
   FrontendParams frontend_params_;
-  LoopClosureDetectorParams lcd_params_;
 };
 
 TEST_F(VioParamsFixture, defaultConstructorWithoutParsing) {
@@ -75,7 +71,6 @@ TEST_F(VioParamsFixture, defaultConstructorWithoutParsing) {
   ImuParams default_imu_params;
   BackendParams default_backend_params;
   FrontendParams default_frontend_params;
-  LoopClosureDetectorParams default_lcd_params;
 
   // Compare
   EXPECT_EQ(default_imu_params, default_imu_params);
@@ -83,7 +78,6 @@ TEST_F(VioParamsFixture, defaultConstructorWithoutParsing) {
   EXPECT_EQ(vio_params.camera_params_.size(), 0u);
   EXPECT_EQ(*vio_params.backend_params_, default_backend_params);
   EXPECT_EQ(vio_params.frontend_params_, default_frontend_params);
-  EXPECT_EQ(vio_params.lcd_params_, default_lcd_params);
 }
 
 TEST_F(VioParamsFixture, defaultConstructorWithParsing) {
@@ -104,7 +98,6 @@ TEST_F(VioParamsFixture, defaultConstructorWithParsing) {
   ASSERT_EQ(vio_params.camera_params_.size(), 2u);
   EXPECT_EQ(vio_params.camera_params_.at(0), left_cam_params_);
   EXPECT_EQ(vio_params.camera_params_.at(1), right_cam_params_);
-  EXPECT_EQ(vio_params.lcd_params_, lcd_params_);
 }
 
 TEST_F(VioParamsFixture, explicitConstructorCorrect) {
@@ -115,7 +108,6 @@ TEST_F(VioParamsFixture, explicitConstructorCorrect) {
                        FLAGS_test_data_path + "/EurocParams/" + VioParams::kRightCameraFilename,
                        FLAGS_test_data_path + "/EurocParams/" + VioParams::kFrontendFilename,
                        FLAGS_test_data_path + "/EurocParams/" + VioParams::kBackendFilename,
-                       FLAGS_test_data_path + "/EurocParams/" + VioParams::kLcdFilename,
                        FLAGS_test_data_path + "/EurocParams/" + VioParams::kDisplayFilename,
                        "",
                        true);
@@ -134,7 +126,6 @@ TEST_F(VioParamsFixture, explicitConstructorCorrect) {
   ASSERT_EQ(vio_params.camera_params_.size(), 2u);
   EXPECT_EQ(vio_params.camera_params_.at(0), left_cam_params_);
   EXPECT_EQ(vio_params.camera_params_.at(1), right_cam_params_);
-  EXPECT_EQ(vio_params.lcd_params_, lcd_params_);
 }
 
 }  // namespace VIO

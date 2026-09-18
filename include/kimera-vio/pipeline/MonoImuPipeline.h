@@ -29,8 +29,7 @@ class MonoImuPipeline : public Pipeline {
  public:
   MonoImuPipeline(const VioParams& params,
                   Visualizer3D::UniquePtr&& visualizer = nullptr,
-                  DisplayBase::UniquePtr&& displayer = nullptr,
-                  PreloadedVocab::Ptr&& preloaded_vocab = nullptr);
+                  DisplayBase::UniquePtr&& displayer = nullptr);
 
   ~MonoImuPipeline() = default;
 

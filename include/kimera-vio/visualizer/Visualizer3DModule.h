@@ -41,7 +41,6 @@ class VisualizerModule
 
   VisualizerModule(OutputQueue* output_queue,
                    bool parallel_run,
-                   bool use_lcd,
                    Visualizer3D::UniquePtr visualizer);
   virtual ~VisualizerModule() = default;
 

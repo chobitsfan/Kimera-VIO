@@ -32,7 +32,6 @@ decltype(
     VioParams::kRightCameraFilename) constexpr VioParams::kRightCameraFilename;
 decltype(VioParams::kFrontendFilename) constexpr VioParams::kFrontendFilename;
 decltype(VioParams::kBackendFilename) constexpr VioParams::kBackendFilename;
-decltype(VioParams::kLcdFilename) constexpr VioParams::kLcdFilename;
 decltype(VioParams::kDisplayFilename) constexpr VioParams::kDisplayFilename;
 decltype(VioParams::kOdometryFilename) constexpr VioParams::kOdometryFilename;
 
@@ -43,7 +42,6 @@ VioParams::VioParams(const std::string& params_folder_path)
                 params_folder_path + '/' + kRightCameraFilename,
                 params_folder_path + '/' + kFrontendFilename,
                 params_folder_path + '/' + kBackendFilename,
-                params_folder_path + '/' + kLcdFilename,
                 params_folder_path + '/' + kDisplayFilename,
                 FLAGS_use_external_odometry
                     ? params_folder_path + '/' + kOdometryFilename
@@ -58,7 +56,6 @@ VioParams::VioParams(const std::string& params_folder_path,
                 sensor_folder_path + '/' + kRightCameraFilename,
                 params_folder_path + '/' + kFrontendFilename,
                 params_folder_path + '/' + kBackendFilename,
-                params_folder_path + '/' + kLcdFilename,
                 params_folder_path + '/' + kDisplayFilename,
                 FLAGS_use_external_odometry
                     ? sensor_folder_path + '/' + kOdometryFilename
@@ -72,7 +69,6 @@ VioParams::VioParams(const std::string& pipeline_params_filepath,
                      const std::string& right_cam_params_filepath,
                      const std::string& frontend_params_filepath,
                      const std::string& backend_params_filepath,
-                     const std::string& lcd_params_filepath,
                      const std::string& display_params_filepath,
                      const std::string& odom_params_filepath,
                      bool should_parse)
@@ -82,7 +78,6 @@ VioParams::VioParams(const std::string& pipeline_params_filepath,
       camera_params_(),
       frontend_params_(),
       backend_params_(std::make_shared<BackendParams>()),
-      lcd_params_(),
       display_params_(std::make_shared<DisplayParams>(DisplayType::kOpenCV)),
       frontend_type_(FrontendType::kStereoImu),
       backend_type_(BackendType::kStructuralRegularities),
@@ -94,7 +89,6 @@ VioParams::VioParams(const std::string& pipeline_params_filepath,
       right_cam_params_filepath_(right_cam_params_filepath),
       frontend_params_filepath_(frontend_params_filepath),
       backend_params_filepath_(backend_params_filepath),
-      lcd_params_filepath_(lcd_params_filepath),
       display_params_filepath_(display_params_filepath),
       odom_params_filepath_(odom_params_filepath) {
   if (should_parse) {
@@ -151,9 +145,6 @@ bool VioParams::parseYAML(const std::string&) {
   // Parse Frontend params.
   parsePipelineParams(frontend_params_filepath_, &frontend_params_);
 
-  // Parse LcdParams
-  parsePipelineParams(lcd_params_filepath_, &lcd_params_);
-
   // Parse DisplayParams
   switch (display_type_) {
     case DisplayType::kOpenCV: {
@@ -191,7 +182,6 @@ void VioParams::print() const {
   frontend_params_.print();
   CHECK(backend_params_);
   backend_params_->print();
-  lcd_params_.print();
   CHECK(display_params_);
   display_params_->print();
   LOG(INFO) << "Frontend Type: " << VIO::to_underlying(frontend_type_);

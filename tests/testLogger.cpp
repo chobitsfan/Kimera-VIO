@@ -115,20 +115,6 @@ class FrontendLoggerFixture : public LoggerFixture {
   std::unique_ptr<FrontendLogger> logger_;
 };
 
-class LoopClosureDetectorLoggerFixture : public LoggerFixture {
- public:
-  LoopClosureDetectorLoggerFixture() {
-    FLAGS_output_path = logger_FLAGS_test_data_path + "loopclosure_output/";
-    logger_ = std::make_unique<LoopClosureDetectorLogger>();
-
-    // Seed randomness.
-    std::srand(0);
-  }
-
- protected:
-  std::unique_ptr<LoopClosureDetectorLogger> logger_;
-};
-
 TEST_F(BackendLoggerFixture, logBackendOutput) {
   // Declare all random output members.
   const Timestamp& timestamp = 123;
@@ -479,75 +465,6 @@ TEST_F(FrontendLoggerFixture, logFrontendRansac) {
   EXPECT_LT(actual_qx - stereo_pose.rotation().toQuaternion().x(), tol);
   EXPECT_LT(actual_qy - stereo_pose.rotation().toQuaternion().y(), tol);
   EXPECT_LT(actual_qz - stereo_pose.rotation().toQuaternion().z(), tol);
-}
-
-TEST_F(LoopClosureDetectorLoggerFixture, logOptimizedTraj) {
-  const Timestamp& timestamp_kf = 123;
-  const Timestamp& timestamp_query = 123;
-  const Timestamp& timestamp_match = 123;
-  const FrameId& id_match = 123;
-  const FrameId& id_recent = 123;
-  gtsam::Pose3 relative_pose =
-      gtsam::Pose3(gtsam::Rot3(), gtsam::Point3::Random());
-  gtsam::Pose3 w_pose_map =
-      gtsam::Pose3(gtsam::Rot3(), gtsam::Point3::Random());
-  gtsam::Pose3 map_pose_odom =
-      gtsam::Pose3(gtsam::Rot3(), gtsam::Point3::Random());
-  gtsam::Pose3 traj_pose = gtsam::Pose3(gtsam::Rot3(), gtsam::Point3::Random());
-  gtsam::Values traj_values;
-  traj_values.insert(gtsam::Symbol(0), traj_pose);
-  traj_values.insert(gtsam::Symbol(1), traj_pose);
-
-  std::unordered_map<VIO::FrameId, VIO::Timestamp> ts_map;
-  ts_map[0] = timestamp_kf;
-  ts_map[1] = timestamp_kf;
-
-  logger_->logTimestampMap(ts_map);
-
-  LcdOutput lcd_packet(true,
-                       timestamp_kf,
-                       timestamp_query,
-                       timestamp_match,
-                       id_match,
-                       id_recent,
-                       relative_pose);
-  lcd_packet.setMapInformation(
-      w_pose_map, map_pose_odom, traj_values, gtsam::NonlinearFactorGraph());
-
-  logger_->logOptimizedTraj(lcd_packet);
-
-  // First check the output_frontend_ransac_mono.csv results file.
-  std::string opt_traj_csv = FLAGS_output_path + "traj_pgo.csv";
-  CsvMat opt_traj = csv_reader_.getData(opt_traj_csv);
-
-  // Check that only header and one line were logged.
-  EXPECT_EQ(opt_traj.size(), 2);
-
-  // Check csv header for output_frontend_ransac_mono.csv.
-  std::vector<std::string> actual_header = opt_traj.at(0);
-  std::vector<std::string> expected_header = {
-      "#timestamp_kf", "x", "y", "z", "qw", "qx", "qy", "qz"};
-  checkHeader(actual_header, expected_header);
-
-  // Check values of the only result line.
-  std::vector<std::string> actual_opt_traj = opt_traj.at(1);
-
-  Timestamp actual_timestamp = std::stof(actual_opt_traj.at(0));
-  float actual_x = std::stof(actual_opt_traj.at(1));
-  float actual_y = std::stof(actual_opt_traj.at(2));
-  float actual_z = std::stof(actual_opt_traj.at(3));
-  float actual_qw = std::stof(actual_opt_traj.at(4));
-  float actual_qx = std::stof(actual_opt_traj.at(5));
-  float actual_qy = std::stof(actual_opt_traj.at(6));
-  float actual_qz = std::stof(actual_opt_traj.at(7));
-  EXPECT_EQ(actual_timestamp, timestamp_kf);
-  EXPECT_LT(actual_x - traj_pose.translation().x(), tol);
-  EXPECT_LT(actual_y - traj_pose.translation().y(), tol);
-  EXPECT_LT(actual_z - traj_pose.translation().z(), tol);
-  EXPECT_LT(actual_qw - traj_pose.rotation().toQuaternion().w(), tol);
-  EXPECT_LT(actual_qx - traj_pose.rotation().toQuaternion().x(), tol);
-  EXPECT_LT(actual_qy - traj_pose.rotation().toQuaternion().y(), tol);
-  EXPECT_LT(actual_qz - traj_pose.rotation().toQuaternion().z(), tol);
 }
 
 TEST(testOpenFile, OpenFile) {

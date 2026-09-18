@@ -137,8 +137,13 @@ void KimeraRos2Node::init_sub(VIO::Pipeline::Ptr vio_pipeline) {
     auto l_img_cb = [this](sensor_msgs::msg::Image::UniquePtr msg) -> void {
         int64_t ts = msg->header.stamp.sec * 1000000000LL + msg->header.stamp.nanosec;
         cv::Mat mat(msg->height, msg->width, CV_8UC1, const_cast<uint8_t*>(msg->data.data()), msg->step);
-        vio_pipeline_->fillLeftFrameQueue(std::make_unique<VIO::Frame>(frame_count_, ts, vio_params_.camera_params_.at(0), mat.clone()));
-        frame_count_++;
+        if (ts > latest_imu_ts) {
+            latest_l_img = mat.clone();
+            latest_l_img_ts = ts;
+        } else {
+            vio_pipeline_->fillLeftFrameQueue(std::make_unique<VIO::Frame>(frame_count_, ts, vio_params_.camera_params_.at(0), mat.clone()));
+            frame_count_++;
+        }
     };
     auto imu_cb = [this](sensor_msgs::msg::Imu::UniquePtr msg) -> void {
         int64_t ts = msg->header.stamp.sec * 1000000000LL + msg->header.stamp.nanosec;
@@ -150,6 +155,12 @@ void KimeraRos2Node::init_sub(VIO::Pipeline::Ptr vio_pipeline) {
         imu_accgyr(4) = msg->angular_velocity.y;
         imu_accgyr(5) = msg->angular_velocity.z;
         vio_pipeline_->fillSingleImuQueue(VIO::ImuMeasurement(ts, imu_accgyr));
+        latest_imu_ts = ts;
+        if (!latest_l_img.empty() && ts > latest_l_img_ts) {
+            vio_pipeline_->fillLeftFrameQueue(std::make_unique<VIO::Frame>(frame_count_, latest_l_img_ts, vio_params_.camera_params_.at(0), latest_l_img));
+            frame_count_++;
+            latest_l_img = cv::Mat();
+        }
     };
     auto t_offset_cb = [this](std_msgs::msg::Int64::UniquePtr msg) -> void {
         pico_pi_t_offset = msg->data;
