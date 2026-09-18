@@ -56,11 +56,17 @@ bool ImuParams::parseYAML(const std::string& filepath) {
   nominal_sampling_time_s_ = 1.0 / rate_hz;
 
   // IMU PARAMS
+  int imu_static_noise_scale_ = 1;
   yaml_parser.getYamlParam("imu_bias_init_sigma", &init_bias_sigma_);
+  yaml_parser.getYamlParam("imu_static_noise_scale", &imu_static_noise_scale_);
   yaml_parser.getYamlParam("gyroscope_noise_density", &gyro_noise_density_);
   yaml_parser.getYamlParam("accelerometer_noise_density", &acc_noise_density_);
   yaml_parser.getYamlParam("gyroscope_random_walk", &gyro_random_walk_);
   yaml_parser.getYamlParam("accelerometer_random_walk", &acc_random_walk_);
+  gyro_noise_density_ *= imu_static_noise_scale_;
+  acc_noise_density_ *= imu_static_noise_scale_;
+  gyro_random_walk_ *= imu_static_noise_scale_;
+  acc_random_walk_ *= imu_static_noise_scale_;
   yaml_parser.getYamlParam("imu_integration_sigma", &imu_integration_sigma_);
   yaml_parser.getYamlParam("imu_time_shift", &imu_time_shift_);
   yaml_parser.getYamlParam("do_imu_rate_time_alignment",
