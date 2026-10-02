@@ -11,7 +11,7 @@ maxFeatureAge: 25
 # 1: ORB
 # 2: AGAST
 # 3: GFTT, aka Good Features To Track
-feature_detector_type: 3
+feature_detector_type: 0
 maxFeaturesPerFrame: 300
 
 # Good Features To Track specific parameters
@@ -38,7 +38,7 @@ bidirectionalMatching: 0
 max_nr_keypoints_before_anms: 2000
 enable_non_max_suppression: 1
 non_max_suppression_type: 6
-nr_horizontal_bins: 7
+nr_horizontal_bins: 8
 nr_vertical_bins: 5
 binning_mask: []
 
