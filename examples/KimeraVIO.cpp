@@ -134,7 +134,7 @@ KimeraRos2Node::~KimeraRos2Node() {
 }
 
 void KimeraRos2Node::init_sub(VIO::Pipeline::Ptr vio_pipeline) {
-    auto l_img_cb = [this](sensor_msgs::msg::Image::UniquePtr msg) -> void {
+    auto l_img_cb = [this](const sensor_msgs::msg::Image::ConstSharedPtr msg) -> void {
         int64_t ts = msg->header.stamp.sec * 1000000000LL + msg->header.stamp.nanosec;
         cv::Mat mat(msg->height, msg->width, CV_8UC1, const_cast<uint8_t*>(msg->data.data()), msg->step);
         if (ts > latest_imu_ts) {
@@ -145,7 +145,7 @@ void KimeraRos2Node::init_sub(VIO::Pipeline::Ptr vio_pipeline) {
             frame_count_++;
         }
     };
-    auto imu_cb = [this](sensor_msgs::msg::Imu::UniquePtr msg) -> void {
+    auto imu_cb = [this](const sensor_msgs::msg::Imu::ConstSharedPtr msg) -> void {
         int64_t ts = msg->header.stamp.sec * 1000000000LL + msg->header.stamp.nanosec;
         VIO::ImuAccGyr imu_accgyr;
         imu_accgyr(0) = msg->linear_acceleration.x;
